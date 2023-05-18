@@ -1,0 +1,13 @@
+{
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.hover.enabled": false,
+  "editor.minimap.enabled": false,
+  "editor.parameterHints.enabled": false,
+  "editor.quickSuggestions": false,
+  "editor.quickSuggestionsDelay": 10,
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+  "editor.suggestOnTriggerCharacters": false,
+  "editor.wordBasedSuggestions": false,
+  "CurrentProjectSetting": "x86-Debug"
+}
