@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/22/23 14:30:47
 .Metric Converter - Assignment 3			(AddTwo.asm  Page 1 - 1
 
 
@@ -37,6 +37,19 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
  = 00000003			MAX_ARGS = 3; The largest number of arguments allowed per conversion(SOFT CAP : must be less than 10)
  = 00000033			CHAR_MAX_ARGS = MAX_ARGS + 48
 
+				mSwap           MACRO       a, b
+				    push        EAX
+				    push        EBX
+
+				    mov         EAX, a
+				    mov         EBX, b
+
+				    mov         b, EAX
+				    mov         a, EBX
+
+				    pop         EBX
+				    pop         EAX
+				ENDM
 
  00000000			.data
 
@@ -434,187 +447,194 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
 
  000006E9 0000000F		num_length		DWORD		15; All floats are 15
 
+				; TODO TESTING
+
+ 000006ED 0000002A		user_a          DWORD       42
+ 000006F1 00000064		user_b          DWORD       100
+
+				; TODO TESTING
+
+
  00000000			.code
  00000000			main PROC; (insert executable instructions here)
 
+				; TODO TESTING
+
+ 00000000  A1 000006ED R	mov             EAX, user_a
+ 00000005  E8 00000000 E	call            WriteDec
+ 0000000A  E8 00000000 E	call            Crlf
+ 0000000F  A1 000006F1 R	mov             EAX, user_b
+ 00000014  E8 00000000 E	call            WriteDec
+
+ 00000019  E8 00000000 E	call            Crlf
+ 0000001E  E8 00000000 E	call            Crlf
+
+				mSwap           user_a, user_b
+ 00000023  50		     1	    push        EAX
+ 00000024  53		     1	    push        EBX
+ 00000025  A1 000006ED R     1	    mov         EAX, user_a
+ 0000002A  8B 1D 000006F1 R  1	    mov         EBX, user_b
+ 00000030  A3 000006F1 R     1	    mov         user_b, EAX
+ 00000035  89 1D 000006ED R  1	    mov         user_a, EBX
+ 0000003B  5B		     1	    pop         EBX
+ 0000003C  58		     1	    pop         EAX
+
+ 0000003D  A1 000006ED R	mov             EAX, user_a
+ 00000042  E8 00000000 E	call            WriteDec
+ 00000047  E8 00000000 E	call            Crlf
+ 0000004C  A1 000006F1 R	mov             EAX, user_b
+ 00000051  E8 00000000 E	call            WriteDec
+
+ 00000056  E8 00000000 E	call            Crlf
+ 0000005B  E8 00000000 E	call            Crlf
+
+				; TODO TESTING
+
 
 				; --------------------------------------------------------
- 00000000			setup:
+ 00000060			setup:
 				;
 				; Runs functions that set the environment to expected
 				; --------------------------------------------------------
- 00000000  9B DB E3		finit
+ 00000060  9B DB E3		finit
 
 				; --------------------------------------------------------
- 00000003			introduction:
+ 00000063			introduction:
 				;
 				; Displays extra credit messages, assignment title, and author.
 				; Also gets the user's name and greets them.
 				; --------------------------------------------------------
 
- 00000003  BA 0000001C R	mov			EDX, OFFSET ec1
- 00000008  E8 00000000 E	call		WriteString
- 0000000D  BA 00000052 R	mov			EDX, OFFSET ec2
- 00000012  E8 00000000 E	call		WriteString
- 00000017  BA 00000090 R	mov			EDX, OFFSET ec3
- 0000001C  E8 00000000 E	call		WriteString
- 00000021  BA 0000012D R	mov			EDX, OFFSET ec4
- 00000026  E8 00000000 E	call		WriteString
- 0000002B  BA 000001C8 R	mov			EDX, OFFSET ec5
- 00000030  E8 00000000 E	call		WriteString
- 00000035  BA 0000022F R	mov			EDX, OFFSET ec6
- 0000003A  E8 00000000 E	call		WriteString
+ 00000063  BA 0000001C R	mov			EDX, OFFSET ec1
+ 00000068  E8 00000000 E	call		WriteString
+ 0000006D  BA 00000052 R	mov			EDX, OFFSET ec2
+ 00000072  E8 00000000 E	call		WriteString
+ 00000077  BA 00000090 R	mov			EDX, OFFSET ec3
+ 0000007C  E8 00000000 E	call		WriteString
+ 00000081  BA 0000012D R	mov			EDX, OFFSET ec4
+ 00000086  E8 00000000 E	call		WriteString
+ 0000008B  BA 000001C8 R	mov			EDX, OFFSET ec5
+ 00000090  E8 00000000 E	call		WriteString
+ 00000095  BA 0000022F R	mov			EDX, OFFSET ec6
+ 0000009A  E8 00000000 E	call		WriteString
 
- 0000003F  BA 000002E0 R	mov			EDX, OFFSET header
- 00000044  E8 00000000 E	call		WriteString
+ 0000009F  BA 000002E0 R	mov			EDX, OFFSET header
+ 000000A4  E8 00000000 E	call		WriteString
 
- 00000049  BA 00000312 R	mov			EDX, OFFSET prompt_name
- 0000004E  E8 00000000 E	call		WriteString
+ 000000A9  BA 00000312 R	mov			EDX, OFFSET prompt_name
+ 000000AE  E8 00000000 E	call		WriteString
 
- 00000053  BA 00000669 R	mov			EDX, OFFSET users_name
- 00000058  B9 00000018		mov			ECX, USER_NAME_LEN
- 0000005D  E8 00000000 E	call		ReadString
+ 000000B3  BA 00000669 R	mov			EDX, OFFSET users_name
+ 000000B8  B9 00000018		mov			ECX, USER_NAME_LEN
+ 000000BD  E8 00000000 E	call		ReadString
 
- 00000062  BA 00000336 R	mov			EDX, OFFSET greeting
- 00000067  E8 00000000 E	call		WriteString
- 0000006C  BA 00000669 R	mov			EDX, OFFSET users_name
- 00000071  E8 00000000 E	call		WriteString
- 00000076  BA 0000063F R	mov			EDX, OFFSET exclaim_break
- 0000007B  E8 00000000 E	call		WriteString
+ 000000C2  BA 00000336 R	mov			EDX, OFFSET greeting
+ 000000C7  E8 00000000 E	call		WriteString
+ 000000CC  BA 00000669 R	mov			EDX, OFFSET users_name
+ 000000D1  E8 00000000 E	call		WriteString
+ 000000D6  BA 0000063F R	mov			EDX, OFFSET exclaim_break
+ 000000DB  E8 00000000 E	call		WriteString
 
- 00000080  EB 0A		jmp			_skipRegreet
+ 000000E0  EB 0A		jmp			_skipRegreet
 
 				; --------------------------------------------------------
- 00000082			getUserData:
+ 000000E2			getUserData:
 				;
 				; Gets all values in imperial(standard) to convert.
 				; --------------------------------------------------------
 
- 00000082  BA 00000342 R	mov			EDX, OFFSET regreet 
- 00000087  E8 00000000 E	call		WriteString
- 0000008C			_skipRegreet:
+ 000000E2  BA 00000342 R	mov			EDX, OFFSET regreet 
+ 000000E7  E8 00000000 E	call		WriteString
+ 000000EC			_skipRegreet:
 
-				;; get temperatures(first because it has different validation)
-				;mov			ECX, MAX_ARGS					; Loop a number of times equal to the maximum arguments allowed
-				;mov			ESI, 0
-				;
-				;_getTempInput:
-				;	mov			EDX, OFFSET	instruct_temp
-				;	call		WriteString
-				;	
-				;_skipTempInstruct:
-				;	fld			MIN_F						; ST(0) = MIN_F
-				;	call		ReadFloat					; ST(0) = input, ST(1) = MIN_F
-				;		
-				;
-				;	fcomi		ST(0), ST(1)				; Compare User input to MIN_F  for validation
-				;	jb			_invalidTempInput
-				;
-				;	
-				;	fstp		[users_temp_arr + ESI]		; Pop the user input into the temperature array
-				;	fstp		ST(0)						; Pop the comparison value (Credit to PhiS on StackOverflow : https://stackoverflow.com/a/4810464)
-				;
-				;	add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
-				;	
-				;	loop		_getTempInput
-				;	jmp			_exitTempInput
-				;
-				;	_invalidTempInput:
-				;		push		EDX
-				;		mov			EDX, OFFSET	reinstr_temp
-				;		call		WriteString
-				;		pop			EDX 
-				;		jmp			_skipTempInstruct
-				;_exitTempInput:
-
- 0000008C  E8 00000302		call GetUserTemps
+ 000000EC  E8 00000302		call GetUserTemps
 
 
 				;-----------------------------
 
- 00000091  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 00000096  BE 00000000		mov			ESI, 0
+ 000000F1  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 000000F6  BE 00000000		mov			ESI, 0
 
- 0000009B			_getDistInput:
- 0000009B  BA 0000043A R		mov			EDX, OFFSET	instruct_dist
- 000000A0  E8 00000000 E		call		WriteString
+ 000000FB			_getDistInput:
+ 000000FB  BA 0000043A R		mov			EDX, OFFSET	instruct_dist
+ 00000100  E8 00000000 E		call		WriteString
 					
- 000000A5			_skipDistInstruct:
- 000000A5  E8 00000000 E		call		ReadFloat					; ST(0) = input	
- 000000AA  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
+ 00000105			_skipDistInstruct:
+ 00000105  E8 00000000 E		call		ReadFloat					; ST(0) = input	
+ 0000010A  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
 							
- 000000AC  D9 9E 00000681 R		fstp		[users_dist_arr + ESI]		; Pop the user input into the distance array
+ 0000010C  D9 9E 00000681 R		fstp		[users_dist_arr + ESI]		; Pop the user input into the distance array
 
- 000000B2  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
+ 00000112  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
 					
- 000000B5  E2 E4			loop		_getDistInput
- 000000B7  EB 0E			jmp			_exitDistInput
+ 00000115  E2 E4			loop		_getDistInput
+ 00000117  EB 0E			jmp			_exitDistInput
 
- 000000B9				_invalidDistInput:
- 000000B9  52					push		EDX
- 000000BA  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
- 000000BF  E8 00000000 E			call		WriteString
- 000000C4  5A					pop			EDX 
- 000000C5  EB DE				jmp			_skipDistInstruct
- 000000C7			_exitDistInput :
+ 00000119				_invalidDistInput:
+ 00000119  52					push		EDX
+ 0000011A  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
+ 0000011F  E8 00000000 E			call		WriteString
+ 00000124  5A					pop			EDX 
+ 00000125  EB DE				jmp			_skipDistInstruct
+ 00000127			_exitDistInput :
 
 
 				;-----------------------------
 
- 000000C7  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 000000CC  BE 00000000		mov			ESI, 0
+ 00000127  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 0000012C  BE 00000000		mov			ESI, 0
 
- 000000D1			_getVolInput:
- 000000D1  BA 0000049C R		mov			EDX, OFFSET	instruct_vol
- 000000D6  E8 00000000 E		call		WriteString
+ 00000131			_getVolInput:
+ 00000131  BA 0000049C R		mov			EDX, OFFSET	instruct_vol
+ 00000136  E8 00000000 E		call		WriteString
 					
- 000000DB			_skipVolInstruct:
- 000000DB  E8 00000000 E		call		ReadFloat					; ST(0) = input	
- 000000E0  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
+ 0000013B			_skipVolInstruct:
+ 0000013B  E8 00000000 E		call		ReadFloat					; ST(0) = input	
+ 00000140  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
 							
- 000000E2  D9 9E 00000699 R		fstp		[users_vol_arr + ESI]		; Pop the user input into the volume array
+ 00000142  D9 9E 00000699 R		fstp		[users_vol_arr + ESI]		; Pop the user input into the volume array
 
- 000000E8  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
+ 00000148  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
 					
- 000000EB  E2 E4			loop		_getVolInput
- 000000ED  EB 0E			jmp			_exitVolInput
+ 0000014B  E2 E4			loop		_getVolInput
+ 0000014D  EB 0E			jmp			_exitVolInput
 
- 000000EF				_invalidVolInput:
- 000000EF  52					push		EDX
- 000000F0  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
- 000000F5  E8 00000000 E			call		WriteString
- 000000FA  5A					pop			EDX 
- 000000FB  EB DE				jmp			_skipVolInstruct
- 000000FD			_exitVolInput :
+ 0000014F				_invalidVolInput:
+ 0000014F  52					push		EDX
+ 00000150  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
+ 00000155  E8 00000000 E			call		WriteString
+ 0000015A  5A					pop			EDX 
+ 0000015B  EB DE				jmp			_skipVolInstruct
+ 0000015D			_exitVolInput :
 
 
 				;-----------------------------
 
- 000000FD  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 00000102  BE 00000000		mov			ESI, 0
+ 0000015D  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 00000162  BE 00000000		mov			ESI, 0
 
- 00000107			_getMassInput:
- 00000107  BA 000004CD R		mov			EDX, OFFSET	instruct_mass
- 0000010C  E8 00000000 E		call		WriteString
+ 00000167			_getMassInput:
+ 00000167  BA 000004CD R		mov			EDX, OFFSET	instruct_mass
+ 0000016C  E8 00000000 E		call		WriteString
 					
- 00000111			_skipMassInstruct:
- 00000111  E8 00000000 E		call		ReadFloat					; ST(0) = input	
- 00000116  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
+ 00000171			_skipMassInstruct:
+ 00000171  E8 00000000 E		call		ReadFloat					; ST(0) = input	
+ 00000176  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
 							
- 00000118  D9 9E 000006A5 R		fstp		[users_mass_arr + ESI]		; Pop the user input into the mass array
+ 00000178  D9 9E 000006A5 R		fstp		[users_mass_arr + ESI]		; Pop the user input into the mass array
 
- 0000011E  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
+ 0000017E  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
 					
- 00000121  E2 E4			loop		_getMassInput
- 00000123  EB 0E			jmp			_exitMassInput
+ 00000181  E2 E4			loop		_getMassInput
+ 00000183  EB 0E			jmp			_exitMassInput
 
- 00000125				_invalidMassInput:
- 00000125  52					push		EDX
- 00000126  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
- 0000012B  E8 00000000 E			call		WriteString
- 00000130  5A					pop			EDX 
- 00000131  EB DE				jmp			_skipMassInstruct
- 00000133			_exitMassInput :
+ 00000185				_invalidMassInput:
+ 00000185  52					push		EDX
+ 00000186  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
+ 0000018B  E8 00000000 E			call		WriteString
+ 00000190  5A					pop			EDX 
+ 00000191  EB DE				jmp			_skipMassInstruct
+ 00000193			_exitMassInput :
 
 
 				;fld			users_dist_arr[0]
@@ -631,98 +651,98 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
 
 
 				; --------------------------------------------------------
- 00000133			convertToKM:
+ 00000193			convertToKM:
 				;
 				; Performs the miles/kilometers conversion
 				; --------------------------------------------------------
 
- 00000133  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 00000138  BE 00000000		mov			ESI, 0
+ 00000193  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 00000198  BE 00000000		mov			ESI, 0
 					
- 0000013D			_convertDist:			
- 0000013D  D9 86 00000681 R		fld			[users_dist_arr + ESI]		; Load the next element in the distance array
- 00000143  D9 05 00000008 R		fld			KM_RATIO					; Load the kilometer ratio and multiply
- 00000149  DE C9			fmul
+ 0000019D			_convertDist:			
+ 0000019D  D9 86 00000681 R		fld			[users_dist_arr + ESI]		; Load the next element in the distance array
+ 000001A3  D9 05 00000008 R		fld			KM_RATIO					; Load the kilometer ratio and multiply
+ 000001A9  DE C9			fmul
 
- 0000014B  D9 9E 000006B1 R		fstp		[convr_dist_arr + ESI]		; Pop the user input into the converted distance array
+ 000001AB  D9 9E 000006B1 R		fstp		[convr_dist_arr + ESI]		; Pop the user input into the converted distance array
 
- 00000151  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
+ 000001B1  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
 					
- 00000154  E2 E7			loop		_convertDist
- 00000156			_exitConvertDist :
+ 000001B4  E2 E7			loop		_convertDist
+ 000001B6			_exitConvertDist :
 
 
 				; --------------------------------------------------------
- 00000156			convertToCelsius:
+ 000001B6			convertToCelsius:
 				;
 				; Performs the fahrenheit / celsius conversion
 				; --------------------------------------------------------
 
- 00000156  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 0000015B  BE 00000000		mov			ESI, 0
+ 000001B6  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 000001BB  BE 00000000		mov			ESI, 0
 					
- 00000160			_convertTemp:			
- 00000160  D9 86 0000068D R		fld			[users_temp_arr + ESI]		; Load the next element in the temperature array
- 00000166  D9 05 00000014 R		fld			C_CONST						; Load the constant for converting celsius, subtract
- 0000016C  DE E9			fsub
+ 000001C0			_convertTemp:			
+ 000001C0  D9 86 0000068D R		fld			[users_temp_arr + ESI]		; Load the next element in the temperature array
+ 000001C6  D9 05 00000014 R		fld			C_CONST						; Load the constant for converting celsius, subtract
+ 000001CC  DE E9			fsub
 						
- 0000016E  D9 05 00000018 R		fld			C_RATIO						; Load the kilometer ratio and multiply
- 00000174  DE C9			fmul
+ 000001CE  D9 05 00000018 R		fld			C_RATIO						; Load the kilometer ratio and multiply
+ 000001D4  DE C9			fmul
 
- 00000176  D9 9E 000006BD R		fstp		[convr_temp_arr + ESI]		; Pop the user input into the converted temperature array
+ 000001D6  D9 9E 000006BD R		fstp		[convr_temp_arr + ESI]		; Pop the user input into the converted temperature array
 
- 0000017C  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
+ 000001DC  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
 					
- 0000017F  E2 DF			loop		_convertTemp
- 00000181			_exitConvertTemp :
+ 000001DF  E2 DF			loop		_convertTemp
+ 000001E1			_exitConvertTemp :
 					
 
 				; --------------------------------------------------------
- 00000181			convertToML:
+ 000001E1			convertToML:
 				;
 				; Performs the ounces / milliliters conversion
 				; --------------------------------------------------------
 
- 00000181  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 00000186  BE 00000000		mov			ESI, 0
+ 000001E1  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 000001E6  BE 00000000		mov			ESI, 0
 					
- 0000018B			_convertVol:				
- 0000018B  D9 86 00000699 R		fld			[users_vol_arr + ESI]		; Load the next element in the volume array
- 00000191  D9 05 0000000C R		fld			ML_RATIO					; Load the milliliter ratio and multiply
- 00000197  DE C9			fmul
+ 000001EB			_convertVol:				
+ 000001EB  D9 86 00000699 R		fld			[users_vol_arr + ESI]		; Load the next element in the volume array
+ 000001F1  D9 05 0000000C R		fld			ML_RATIO					; Load the milliliter ratio and multiply
+ 000001F7  DE C9			fmul
 
- 00000199  D9 9E 000006C9 R		fstp		[convr_vol_arr + ESI]		; Pop the user input into the converted volume array
+ 000001F9  D9 9E 000006C9 R		fstp		[convr_vol_arr + ESI]		; Pop the user input into the converted volume array
 
- 0000019F  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
+ 000001FF  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
 					
- 000001A2  E2 E7			loop		_convertVol
- 000001A4			_exitConvertVol :
+ 00000202  E2 E7			loop		_convertVol
+ 00000204			_exitConvertVol :
 
 
 				; --------------------------------------------------------
- 000001A4			convertToKG:
+ 00000204			convertToKG:
 				;
 				; Performs the pounds / kilograms conversion
 				; --------------------------------------------------------
 
- 000001A4  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
- 000001A9  BE 00000000		mov			ESI, 0
+ 00000204  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 00000209  BE 00000000		mov			ESI, 0
 					
- 000001AE			_convertMass:				
- 000001AE  D9 86 000006A5 R		fld			[users_mass_arr + ESI]		; Load the next element in the mass array
- 000001B4  D9 05 00000010 R		fld			KG_RATIO					; Load the kilogram ratio and multiply
- 000001BA  DE C9			fmul
+ 0000020E			_convertMass:				
+ 0000020E  D9 86 000006A5 R		fld			[users_mass_arr + ESI]		; Load the next element in the mass array
+ 00000214  D9 05 00000010 R		fld			KG_RATIO					; Load the kilogram ratio and multiply
+ 0000021A  DE C9			fmul
 
- 000001BC  D9 9E 000006D5 R		fstp		[convr_mass_arr + ESI]		; Pop the user input into the converted mass array
+ 0000021C  D9 9E 000006D5 R		fstp		[convr_mass_arr + ESI]		; Pop the user input into the converted mass array
 
- 000001C2  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
+ 00000222  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes (the size of a real4)
 					
- 000001C5  E2 E7			loop		_convertMass
- 000001C7			_exitConvertMass :
+ 00000225  E2 E7			loop		_convertMass
+ 00000227			_exitConvertMass :
 						
 
 				; --------------------------------------------------------
- 000001C7			displayConvertedData:
+ 00000227			displayConvertedData:
 				;
 				; Displays converted values
 				; label_dist
@@ -731,59 +751,23 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
 				; label_mass
 				; --------------------------------------------------------
 
- 000001C7  E8 00000000 E	call		Crlf
- 000001CC  E8 00000000 E	call		Crlf
+ 00000227  E8 00000000 E	call		Crlf
+ 0000022C  E8 00000000 E	call		Crlf
 
- 000001D1  B9 00000003		mov			ECX, MAX_ARGS					; Initiate loop counter to the users
- 000001D6  BE 00000000		mov			ESI, 0
-
- 000001DB  BA 00000372 R	mov			EDX, OFFSET label_dist
- 000001E0  E8 00000000 E	call		WriteString
-
- 000001E5			displayDistConversion:
- 000001E5  E8 000001F0			call		PrettyPrintSpaces
-					
- 000001EA  D9 86 00000681 R		fld			users_dist_arr[ESI]
- 000001F0  E8 00000000 E		call		WriteFloat
- 000001F5  DD D8			fstp		ST(0)
-						
- 000001F7  BA 00000655 R		mov			EDX, OFFSET mile_string
- 000001FC  E8 00000000 E		call		WriteString 
-
-						
- 00000201  BA 00000665 R		mov			EDX, OFFSET equal_string
- 00000206  E8 00000000 E		call		WriteString 
-
-						
- 0000020B  E8 000001CA			call		PrettyPrintSpaces
-					
- 00000210  D9 86 000006B1 R		fld			convr_dist_arr[ESI]
- 00000216  E8 00000000 E		call		WriteFloat
- 0000021B  DD D8			fstp		ST(0)
-
- 0000021D  BA 00000645 R		mov			EDX, OFFSET km_string
- 00000222  E8 00000000 E		call		WriteString 
-
- 00000227  83 C6 04			add			ESI, 4
- 0000022A  E8 00000000 E		call		Crlf
-
- 0000022F  E2 B4			loop displayDistConversion
-
-						
  00000231  B9 00000003		mov			ECX, MAX_ARGS					; Initiate loop counter to the users
  00000236  BE 00000000		mov			ESI, 0
 
- 0000023B  BA 000003A4 R	mov			EDX, OFFSET label_temp
+ 0000023B  BA 00000372 R	mov			EDX, OFFSET label_dist
  00000240  E8 00000000 E	call		WriteString
 
- 00000245			displayTempConversion:
- 00000245  E8 00000190			call		PrettyPrintSpaces
+ 00000245			displayDistConversion:
+ 00000245  E8 0000022D			call		PrettyPrintSpaces
 					
- 0000024A  D9 86 0000068D R		fld			users_temp_arr[ESI]
+ 0000024A  D9 86 00000681 R		fld			users_dist_arr[ESI]
  00000250  E8 00000000 E		call		WriteFloat
  00000255  DD D8			fstp		ST(0)
 						
- 00000257  BA 00000661 R		mov			EDX, OFFSET f_string
+ 00000257  BA 00000655 R		mov			EDX, OFFSET mile_string
  0000025C  E8 00000000 E		call		WriteString 
 
 						
@@ -791,36 +775,35 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
  00000266  E8 00000000 E		call		WriteString 
 
 						
- 0000026B  E8 0000016A			call		PrettyPrintSpaces
+ 0000026B  E8 00000207			call		PrettyPrintSpaces
 					
- 00000270  D9 86 000006BD R		fld			convr_temp_arr[ESI]
+ 00000270  D9 86 000006B1 R		fld			convr_dist_arr[ESI]
  00000276  E8 00000000 E		call		WriteFloat
  0000027B  DD D8			fstp		ST(0)
 
- 0000027D  BA 00000651 R		mov			EDX, OFFSET c_string
+ 0000027D  BA 00000645 R		mov			EDX, OFFSET km_string
  00000282  E8 00000000 E		call		WriteString 
 
  00000287  83 C6 04			add			ESI, 4
  0000028A  E8 00000000 E		call		Crlf
 
- 0000028F  E2 B4			loop displayTempConversion
+ 0000028F  E2 B4			loop displayDistConversion
 
-						
 						
  00000291  B9 00000003		mov			ECX, MAX_ARGS					; Initiate loop counter to the users
  00000296  BE 00000000		mov			ESI, 0
 
- 0000029B  BA 000003D6 R	mov			EDX, OFFSET label_vol
+ 0000029B  BA 000003A4 R	mov			EDX, OFFSET label_temp
  000002A0  E8 00000000 E	call		WriteString
 
- 000002A5			displayVolConversion:
- 000002A5  E8 00000130			call		PrettyPrintSpaces
+ 000002A5			displayTempConversion:
+ 000002A5  E8 000001CD			call		PrettyPrintSpaces
 					
- 000002AA  D9 86 00000699 R		fld			users_vol_arr[ESI]
+ 000002AA  D9 86 0000068D R		fld			users_temp_arr[ESI]
  000002B0  E8 00000000 E		call		WriteFloat
  000002B5  DD D8			fstp		ST(0)
 						
- 000002B7  BA 00000659 R		mov			EDX, OFFSET oz_string
+ 000002B7  BA 00000661 R		mov			EDX, OFFSET f_string
  000002BC  E8 00000000 E		call		WriteString 
 
 						
@@ -828,35 +811,36 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
  000002C6  E8 00000000 E		call		WriteString 
 
 						
- 000002CB  E8 0000010A			call		PrettyPrintSpaces
+ 000002CB  E8 000001A7			call		PrettyPrintSpaces
 					
- 000002D0  D9 86 000006C9 R		fld			convr_vol_arr[ESI]
+ 000002D0  D9 86 000006BD R		fld			convr_temp_arr[ESI]
  000002D6  E8 00000000 E		call		WriteFloat
  000002DB  DD D8			fstp		ST(0)
 
- 000002DD  BA 00000649 R		mov			EDX, OFFSET ml_string
+ 000002DD  BA 00000651 R		mov			EDX, OFFSET c_string
  000002E2  E8 00000000 E		call		WriteString 
 
  000002E7  83 C6 04			add			ESI, 4
  000002EA  E8 00000000 E		call		Crlf
 
- 000002EF  E2 B4			loop displayVolConversion
+ 000002EF  E2 B4			loop displayTempConversion
 
+						
 						
  000002F1  B9 00000003		mov			ECX, MAX_ARGS					; Initiate loop counter to the users
  000002F6  BE 00000000		mov			ESI, 0
 
- 000002FB  BA 00000408 R	mov			EDX, OFFSET label_mass
+ 000002FB  BA 000003D6 R	mov			EDX, OFFSET label_vol
  00000300  E8 00000000 E	call		WriteString
 
- 00000305			displayMassConversion:
- 00000305  E8 000000D0			call		PrettyPrintSpaces
+ 00000305			displayVolConversion:
+ 00000305  E8 0000016D			call		PrettyPrintSpaces
 					
- 0000030A  D9 86 000006A5 R		fld			users_mass_arr[ESI]
+ 0000030A  D9 86 00000699 R		fld			users_vol_arr[ESI]
  00000310  E8 00000000 E		call		WriteFloat
  00000315  DD D8			fstp		ST(0)
 						
- 00000317  BA 0000065D R		mov			EDX, OFFSET lb_string
+ 00000317  BA 00000659 R		mov			EDX, OFFSET oz_string
  0000031C  E8 00000000 E		call		WriteString 
 
 						
@@ -864,19 +848,55 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
  00000326  E8 00000000 E		call		WriteString 
 
 						
- 0000032B  E8 000000AA			call		PrettyPrintSpaces
+ 0000032B  E8 00000147			call		PrettyPrintSpaces
 					
- 00000330  D9 86 000006D5 R		fld			convr_mass_arr[ESI]
+ 00000330  D9 86 000006C9 R		fld			convr_vol_arr[ESI]
  00000336  E8 00000000 E		call		WriteFloat
  0000033B  DD D8			fstp		ST(0)
 
- 0000033D  BA 0000064D R		mov			EDX, OFFSET kg_string
+ 0000033D  BA 00000649 R		mov			EDX, OFFSET ml_string
  00000342  E8 00000000 E		call		WriteString 
 
  00000347  83 C6 04			add			ESI, 4
  0000034A  E8 00000000 E		call		Crlf
 
- 0000034F  E2 B4			loop displayMassConversion
+ 0000034F  E2 B4			loop displayVolConversion
+
+						
+ 00000351  B9 00000003		mov			ECX, MAX_ARGS					; Initiate loop counter to the users
+ 00000356  BE 00000000		mov			ESI, 0
+
+ 0000035B  BA 00000408 R	mov			EDX, OFFSET label_mass
+ 00000360  E8 00000000 E	call		WriteString
+
+ 00000365			displayMassConversion:
+ 00000365  E8 0000010D			call		PrettyPrintSpaces
+					
+ 0000036A  D9 86 000006A5 R		fld			users_mass_arr[ESI]
+ 00000370  E8 00000000 E		call		WriteFloat
+ 00000375  DD D8			fstp		ST(0)
+						
+ 00000377  BA 0000065D R		mov			EDX, OFFSET lb_string
+ 0000037C  E8 00000000 E		call		WriteString 
+
+						
+ 00000381  BA 00000665 R		mov			EDX, OFFSET equal_string
+ 00000386  E8 00000000 E		call		WriteString 
+
+						
+ 0000038B  E8 000000E7			call		PrettyPrintSpaces
+					
+ 00000390  D9 86 000006D5 R		fld			convr_mass_arr[ESI]
+ 00000396  E8 00000000 E		call		WriteFloat
+ 0000039B  DD D8			fstp		ST(0)
+
+ 0000039D  BA 0000064D R		mov			EDX, OFFSET kg_string
+ 000003A2  E8 00000000 E		call		WriteString 
+
+ 000003A7  83 C6 04			add			ESI, 4
+ 000003AA  E8 00000000 E		call		Crlf
+
+ 000003AF  E2 B4			loop displayMassConversion
 
 
 
@@ -887,31 +907,31 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
 				; --------------------------------------------------------
 
 				; Prompt user to go again
- 00000351  E8 00000000 E	call		Crlf
- 00000356  BA 000005B0 R	mov			EDX, OFFSET try_again
- 0000035B  E8 00000000 E	call		WriteString
+ 000003B1  E8 00000000 E	call		Crlf
+ 000003B6  BA 000005B0 R	mov			EDX, OFFSET try_again
+ 000003BB  E8 00000000 E	call		WriteString
 
- 00000360  E8 00000000 E	call		ReadInt
- 00000365  83 F8 01		cmp			EAX, 1
- 00000368  0F 84 FFFFFD14	je			getUserData						; If the user enters 1, return to the continuing prompt
+ 000003C0  E8 00000000 E	call		ReadInt
+ 000003C5  83 F8 01		cmp			EAX, 1
+ 000003C8  0F 84 FFFFFD14	je			getUserData						; If the user enters 1, return to the continuing prompt
 
- 0000036E  BA 00000616 R	mov			EDX, OFFSET	outro
- 00000373  E8 00000000 E	call		WriteString						; Prints the string outro with two newlines if the user did not choose to repeat the program
- 00000378  BA 00000669 R	mov			EDX, OFFSET users_name
- 0000037D  E8 00000000 E	call		WriteString
- 00000382  BA 0000063F R	mov			EDX, OFFSET exclaim_break
- 00000387  E8 00000000 E	call		WriteString
+ 000003CE  BA 00000616 R	mov			EDX, OFFSET	outro
+ 000003D3  E8 00000000 E	call		WriteString						; Prints the string outro with two newlines if the user did not choose to repeat the program
+ 000003D8  BA 00000669 R	mov			EDX, OFFSET users_name
+ 000003DD  E8 00000000 E	call		WriteString
+ 000003E2  BA 0000063F R	mov			EDX, OFFSET exclaim_break
+ 000003E7  E8 00000000 E	call		WriteString
 
 
 				exit; exit to operating system
- 0000038C  6A 00	   *	    push   +000000000h
- 0000038E  E8 00000000 E   *	    call   ExitProcess
- 00000393			main ENDP
+ 000003EC  6A 00	   *	    push   +000000000h
+ 000003EE  E8 00000000 E   *	    call   ExitProcess
+ 000003F3			main ENDP
 
 				; (insert additional procedures here)
 
 				; -------------------------------------------------------- -
- 00000393			GetUserTemps PROC uses ECX EDX ESI
+ 000003F3			GetUserTemps PROC uses ECX EDX ESI
 				;
 				; Prompts user for the temperatures they want converted
 				; Preconditions: Define a global DWORD array of size MAX_ARGS called users_temp_arr
@@ -919,51 +939,100 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
 				; -------------------------------------------------------- -
 
 				; get temperatures(first because it has different validation)
- 00000393  51		   *	    push   ecx
- 00000394  52		   *	    push   edx
- 00000395  56		   *	    push   esi
- 00000396  B9 00000003		mov			ECX, MAX_ARGS					; Loop a number of times equal to the maximum arguments allowed
- 0000039B  BE 00000000		mov			ESI, 0
+ 000003F3  51		   *	    push   ecx
+ 000003F4  52		   *	    push   edx
+ 000003F5  56		   *	    push   esi
+ 000003F6  B9 00000003		mov			ECX, MAX_ARGS					; Loop a number of times equal to the maximum arguments allowed
+ 000003FB  BE 00000000		mov			ESI, 0
 
- 000003A0			_getTempInput:
- 000003A0  BA 0000046B R		mov			EDX, OFFSET	instruct_temp
- 000003A5  E8 00000000 E		call		WriteString
+ 00000400			_getTempInput:
+ 00000400  BA 0000046B R		mov			EDX, OFFSET	instruct_temp
+ 00000405  E8 00000000 E		call		WriteString
 					
- 000003AA			_skipTempInstruct:
- 000003AA  D9 05 00000000 R		fld			MIN_F						; ST(0) = MIN_F
- 000003B0  E8 00000000 E		call		ReadFloat					; ST(0) = input, ST(1) = MIN_F
+ 0000040A			_skipTempInstruct:
+ 0000040A  D9 05 00000000 R		fld			MIN_F						; ST(0) = MIN_F
+ 00000410  E8 00000000 E		call		ReadFloat					; ST(0) = input, ST(1) = MIN_F
 						
 
- 000003B5  DB F1			fcomi		ST(0), ST(1)				; Compare User input to MIN_F  for validation
- 000003B7  72 0F			jb			_invalidTempInput
+ 00000415  DB F1			fcomi		ST(0), ST(1)				; Compare User input to MIN_F  for validation
+ 00000417  72 0F			jb			_invalidTempInput
 
 					
- 000003B9  D9 9E 0000068D R		fstp		[users_temp_arr + ESI]		; Pop the user input into the temperature array
- 000003BF  DD D8			fstp		ST(0)						; Pop the comparison value (Credit to PhiS on StackOverflow : https://stackoverflow.com/a/4810464)
+ 00000419  D9 9E 0000068D R		fstp		[users_temp_arr + ESI]		; Pop the user input into the temperature array
+ 0000041F  DD D8			fstp		ST(0)						; Pop the comparison value (Credit to PhiS on StackOverflow : https://stackoverflow.com/a/4810464)
 
- 000003C1  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
+ 00000421  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
 					
- 000003C4  E2 DA			loop		_getTempInput
- 000003C6  EB 0E			jmp			_exitTempInput
+ 00000424  E2 DA			loop		_getTempInput
+ 00000426  EB 0E			jmp			_exitTempInput
 
- 000003C8				_invalidTempInput:
- 000003C8  52					push		EDX
- 000003C9  BA 00000557 R			mov			EDX, OFFSET	reinstr_temp
- 000003CE  E8 00000000 E			call		WriteString
- 000003D3  5A					pop			EDX 
- 000003D4  EB D4				jmp			_skipTempInstruct
- 000003D6			_exitTempInput:
+ 00000428				_invalidTempInput:
+ 00000428  52					push		EDX
+ 00000429  BA 00000557 R			mov			EDX, OFFSET	reinstr_temp
+ 0000042E  E8 00000000 E			call		WriteString
+ 00000433  5A					pop			EDX 
+ 00000434  EB D4				jmp			_skipTempInstruct
+ 00000436			_exitTempInput:
 
 				ret
- 000003D6  5E		   *	    pop    esi
- 000003D7  5A		   *	    pop    edx
- 000003D8  59		   *	    pop    ecx
- 000003D9  C3		   *	    ret    00000h
- 000003DA			GetUserTemps ENDP
+ 00000436  5E		   *	    pop    esi
+ 00000437  5A		   *	    pop    edx
+ 00000438  59		   *	    pop    ecx
+ 00000439  C3		   *	    ret    00000h
+ 0000043A			GetUserTemps ENDP
 
 
 				; -------------------------------------------------------- -
- 000003DA			PrettyPrintSpaces PROC uses EAX ECX EDX
+ 0000043A			GetUserInputs PROC uses ECX EDX ESI
+				;
+				; Prompts user for the other valeus they want converted
+				; Preconditions: Push a valid instruction string THEN a valid input array
+				; Postconditions: Updates users_temp_arr array in memory
+				; -------------------------------------------------------- -
+
+
+ 0000043A  51		   *	    push   ecx
+ 0000043B  52		   *	    push   edx
+ 0000043C  56		   *	    push   esi
+ 0000043D  B9 00000003		mov			ECX, MAX_ARGS; Loop a number of times equal to the maximum arguments allowed
+ 00000442  BE 00000000		mov			ESI, 0
+
+ 00000447			_getInput:
+ 00000447  BA 0000049C R		mov			EDX, OFFSET	instruct_vol;TODO XXXXXXXXXXXXXX
+ 0000044C  E8 00000000 E		call		WriteString
+					
+ 00000451			_skipInstruct:
+ 00000451  E8 00000000 E		call		ReadFloat					; ST(0) = input	
+ 00000456  D9 E1			fabs									; ST(0) = absolute value of input (no negatives)
+							
+ 00000458  D9 9E 00000699 R		fstp		[users_vol_arr + ESI]; TODO XXXXXXXXXXXXXX; Pop the user input into the volume array
+
+ 0000045E  83 C6 04			add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
+					
+ 00000461  E2 E4			loop		_getInput
+ 00000463  EB 0E			jmp			_exitInput
+
+ 00000465				_invalidInput:
+ 00000465  52					push		EDX
+ 00000466  BA 000004FE R			mov			EDX, OFFSET	reinstr_positv
+ 0000046B  E8 00000000 E			call		WriteString
+ 00000470  5A					pop			EDX 
+ 00000471  EB DE				jmp			_skipInstruct
+ 00000473			_exitInput :
+
+				ret
+ 00000473  5E		   *	    pop    esi
+ 00000474  5A		   *	    pop    edx
+ 00000475  59		   *	    pop    ecx
+ 00000476  C3		   *	    ret    00000h
+ 00000477			GetUserInputs ENDP
+
+
+				;;;;;;;;;;;;;;;;;;;;;;;;;
+						;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+				; -------------------------------------------------------- -
+ 00000477			PrettyPrintSpaces PROC uses EAX ECX EDX
 				;
 				; Prints the leading whitespace for tabulation of a number
 				; Preconditions: number to print is in EAX, WILL MUTATE
@@ -974,30 +1043,37 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
 				; for tab_width - num_length
 				; print SPACE
 				; endfor
- 000003DA  50		   *	    push   eax
- 000003DB  51		   *	    push   ecx
- 000003DC  52		   *	    push   edx
- 000003DD  A1 000006E1 R	mov			EAX, tab_width
- 000003E2  2B 05 000006E9 R	sub			EAX, num_length
- 000003E8  8B C8		mov			ECX, EAX
+ 00000477  50		   *	    push   eax
+ 00000478  51		   *	    push   ecx
+ 00000479  52		   *	    push   edx
+ 0000047A  A1 000006E1 R	mov			EAX, tab_width
+ 0000047F  2B 05 000006E9 R	sub			EAX, num_length
+ 00000485  8B C8		mov			ECX, EAX
 
- 000003EA  BA 00000643 R	mov			EDX, OFFSET space_string
- 000003EF			printSpace :
- 000003EF  E8 00000000 E	call	WriteString
- 000003F4  E2 F9		loop	printSpace
+ 00000487  BA 00000643 R	mov			EDX, OFFSET space_string
+ 0000048C			printSpace :
+ 0000048C  E8 00000000 E	call	WriteString
+ 00000491  E2 F9		loop	printSpace
 
 				ret
- 000003F6  5A		   *	    pop    edx
- 000003F7  59		   *	    pop    ecx
- 000003F8  58		   *	    pop    eax
- 000003F9  C3		   *	    ret    00000h
- 000003FA			PrettyPrintSpaces ENDP
+ 00000493  5A		   *	    pop    edx
+ 00000494  59		   *	    pop    ecx
+ 00000495  58		   *	    pop    eax
+ 00000496  C3		   *	    ret    00000h
+ 00000497			PrettyPrintSpaces ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/17/23 15:31:49
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    05/22/23 14:30:47
 .Metric Converter - Assignment 3			(AddTwo.asm  Symbols 2 - 1
 
 
+
+
+Macros:
+
+                N a m e                 Type
+
+mSwap  . . . . . . . . . . . . .	Proc
 
 
 Structures and Unions:
@@ -1088,8 +1164,8 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 000006ED Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000003FA Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000006F5 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000497 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -1129,11 +1205,16 @@ GetStdHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 GetSystemTime  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetTextColor . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetTickCount . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-GetUserTemps . . . . . . . . . .	P Near	 00000393 _TEXT	Length= 00000047 Public STDCALL
-  _getTempInput  . . . . . . . .	L Near	 000003A0 _TEXT	
-  _skipTempInstruct  . . . . . .	L Near	 000003AA _TEXT	
-  _invalidTempInput  . . . . . .	L Near	 000003C8 _TEXT	
-  _exitTempInput . . . . . . . .	L Near	 000003D6 _TEXT	
+GetUserInputs  . . . . . . . . .	P Near	 0000043A _TEXT	Length= 0000003D Public STDCALL
+  _getInput  . . . . . . . . . .	L Near	 00000447 _TEXT	
+  _skipInstruct  . . . . . . . .	L Near	 00000451 _TEXT	
+  _invalidInput  . . . . . . . .	L Near	 00000465 _TEXT	
+  _exitInput . . . . . . . . . .	L Near	 00000473 _TEXT	
+GetUserTemps . . . . . . . . . .	P Near	 000003F3 _TEXT	Length= 00000047 Public STDCALL
+  _getTempInput  . . . . . . . .	L Near	 00000400 _TEXT	
+  _skipTempInstruct  . . . . . .	L Near	 0000040A _TEXT	
+  _invalidTempInput  . . . . . .	L Near	 00000428 _TEXT	
+  _exitTempInput . . . . . . . .	L Near	 00000436 _TEXT	
 Gotoxy . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapAlloc  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1149,8 +1230,8 @@ OpenInputFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ParseDecimal32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseInteger32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 PeekConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-PrettyPrintSpaces  . . . . . . .	P Near	 000003DA _TEXT	Length= 00000020 Public STDCALL
-  printSpace . . . . . . . . . .	L Near	 000003EF _TEXT	
+PrettyPrintSpaces  . . . . . . .	P Near	 00000477 _TEXT	Length= 00000020 Public STDCALL
+  printSpace . . . . . . . . . .	L Near	 0000048C _TEXT	
 Random32 . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 RandomRange  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Randomize  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1203,40 +1284,40 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000393 Public STDCALL
-  setup  . . . . . . . . . . . .	L Near	 00000000 _TEXT	
-  introduction . . . . . . . . .	L Near	 00000003 _TEXT	
-  getUserData  . . . . . . . . .	L Near	 00000082 _TEXT	
-  _skipRegreet . . . . . . . . .	L Near	 0000008C _TEXT	
-  _getDistInput  . . . . . . . .	L Near	 0000009B _TEXT	
-  _skipDistInstruct  . . . . . .	L Near	 000000A5 _TEXT	
-  _invalidDistInput  . . . . . .	L Near	 000000B9 _TEXT	
-  _exitDistInput . . . . . . . .	L Near	 000000C7 _TEXT	
-  _getVolInput . . . . . . . . .	L Near	 000000D1 _TEXT	
-  _skipVolInstruct . . . . . . .	L Near	 000000DB _TEXT	
-  _invalidVolInput . . . . . . .	L Near	 000000EF _TEXT	
-  _exitVolInput  . . . . . . . .	L Near	 000000FD _TEXT	
-  _getMassInput  . . . . . . . .	L Near	 00000107 _TEXT	
-  _skipMassInstruct  . . . . . .	L Near	 00000111 _TEXT	
-  _invalidMassInput  . . . . . .	L Near	 00000125 _TEXT	
-  _exitMassInput . . . . . . . .	L Near	 00000133 _TEXT	
-  convertToKM  . . . . . . . . .	L Near	 00000133 _TEXT	
-  _convertDist . . . . . . . . .	L Near	 0000013D _TEXT	
-  _exitConvertDist . . . . . . .	L Near	 00000156 _TEXT	
-  convertToCelsius . . . . . . .	L Near	 00000156 _TEXT	
-  _convertTemp . . . . . . . . .	L Near	 00000160 _TEXT	
-  _exitConvertTemp . . . . . . .	L Near	 00000181 _TEXT	
-  convertToML  . . . . . . . . .	L Near	 00000181 _TEXT	
-  _convertVol  . . . . . . . . .	L Near	 0000018B _TEXT	
-  _exitConvertVol  . . . . . . .	L Near	 000001A4 _TEXT	
-  convertToKG  . . . . . . . . .	L Near	 000001A4 _TEXT	
-  _convertMass . . . . . . . . .	L Near	 000001AE _TEXT	
-  _exitConvertMass . . . . . . .	L Near	 000001C7 _TEXT	
-  displayConvertedData . . . . .	L Near	 000001C7 _TEXT	
-  displayDistConversion  . . . .	L Near	 000001E5 _TEXT	
-  displayTempConversion  . . . .	L Near	 00000245 _TEXT	
-  displayVolConversion . . . . .	L Near	 000002A5 _TEXT	
-  displayMassConversion  . . . .	L Near	 00000305 _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000003F3 Public STDCALL
+  setup  . . . . . . . . . . . .	L Near	 00000060 _TEXT	
+  introduction . . . . . . . . .	L Near	 00000063 _TEXT	
+  getUserData  . . . . . . . . .	L Near	 000000E2 _TEXT	
+  _skipRegreet . . . . . . . . .	L Near	 000000EC _TEXT	
+  _getDistInput  . . . . . . . .	L Near	 000000FB _TEXT	
+  _skipDistInstruct  . . . . . .	L Near	 00000105 _TEXT	
+  _invalidDistInput  . . . . . .	L Near	 00000119 _TEXT	
+  _exitDistInput . . . . . . . .	L Near	 00000127 _TEXT	
+  _getVolInput . . . . . . . . .	L Near	 00000131 _TEXT	
+  _skipVolInstruct . . . . . . .	L Near	 0000013B _TEXT	
+  _invalidVolInput . . . . . . .	L Near	 0000014F _TEXT	
+  _exitVolInput  . . . . . . . .	L Near	 0000015D _TEXT	
+  _getMassInput  . . . . . . . .	L Near	 00000167 _TEXT	
+  _skipMassInstruct  . . . . . .	L Near	 00000171 _TEXT	
+  _invalidMassInput  . . . . . .	L Near	 00000185 _TEXT	
+  _exitMassInput . . . . . . . .	L Near	 00000193 _TEXT	
+  convertToKM  . . . . . . . . .	L Near	 00000193 _TEXT	
+  _convertDist . . . . . . . . .	L Near	 0000019D _TEXT	
+  _exitConvertDist . . . . . . .	L Near	 000001B6 _TEXT	
+  convertToCelsius . . . . . . .	L Near	 000001B6 _TEXT	
+  _convertTemp . . . . . . . . .	L Near	 000001C0 _TEXT	
+  _exitConvertTemp . . . . . . .	L Near	 000001E1 _TEXT	
+  convertToML  . . . . . . . . .	L Near	 000001E1 _TEXT	
+  _convertVol  . . . . . . . . .	L Near	 000001EB _TEXT	
+  _exitConvertVol  . . . . . . .	L Near	 00000204 _TEXT	
+  convertToKG  . . . . . . . . .	L Near	 00000204 _TEXT	
+  _convertMass . . . . . . . . .	L Near	 0000020E _TEXT	
+  _exitConvertMass . . . . . . .	L Near	 00000227 _TEXT	
+  displayConvertedData . . . . .	L Near	 00000227 _TEXT	
+  displayDistConversion  . . . .	L Near	 00000245 _TEXT	
+  displayTempConversion  . . . .	L Near	 000002A5 _TEXT	
+  displayVolConversion . . . . .	L Near	 00000305 _TEXT	
+  displayMassConversion  . . . .	L Near	 00000365 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 wsprintfA  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -1523,6 +1604,8 @@ sadface  . . . . . . . . . . . .	Byte	 0000063B _DATA
 space_string . . . . . . . . . .	Byte	 00000643 _DATA	
 tab_width  . . . . . . . . . . .	DWord	 000006E1 _DATA	
 try_again  . . . . . . . . . . .	Byte	 000005B0 _DATA	
+user_a . . . . . . . . . . . . .	DWord	 000006ED _DATA	
+user_b . . . . . . . . . . . . .	DWord	 000006F1 _DATA	
 users_dist_arr . . . . . . . . .	DWord	 00000681 _DATA	
 users_mass_arr . . . . . . . . .	DWord	 000006A5 _DATA	
 users_name . . . . . . . . . . .	Byte	 00000669 _DATA	

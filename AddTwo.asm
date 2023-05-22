@@ -16,6 +16,19 @@ USER_NAME_LEN = 24
 MAX_ARGS = 3; The largest number of arguments allowed per conversion(SOFT CAP : must be less than 10)
 CHAR_MAX_ARGS = MAX_ARGS + 48
 
+mSwap           MACRO       a, b
+    push        EAX
+    push        EBX
+
+    mov         EAX, a
+    mov         EBX, b
+
+    mov         b, EAX
+    mov         a, EBX
+
+    pop         EBX
+    pop         EAX
+ENDM
 
 .data
 
@@ -97,8 +110,40 @@ column			DWORD		0
 
 num_length		DWORD		15; All floats are 15
 
+; TODO TESTING
+
+user_a          DWORD       42
+user_b          DWORD       100
+
+; TODO TESTING
+
+
 .code
 main PROC; (insert executable instructions here)
+
+; TODO TESTING
+
+mov             EAX, user_a
+call            WriteDec
+call            Crlf
+mov             EAX, user_b
+call            WriteDec
+
+call            Crlf
+call            Crlf
+
+mSwap           user_a, user_b
+
+mov             EAX, user_a
+call            WriteDec
+call            Crlf
+mov             EAX, user_b
+call            WriteDec
+
+call            Crlf
+call            Crlf
+
+; TODO TESTING
 
 
 ; --------------------------------------------------------
