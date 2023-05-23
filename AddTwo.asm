@@ -13,8 +13,8 @@ LF = 10
 
 USER_NAME_LEN = 24
 
-MAX_ARGS = 3; The largest number of arguments allowed per conversion(SOFT CAP : must be less than 10)
-CHAR_MAX_ARGS = MAX_ARGS + 48
+MIN = 1
+MAX = 400
 
 mSwap           MACRO       a, b
     push        EAX
@@ -34,15 +34,15 @@ ENDM
 
 ; (Conversion)
 
-MIN_F			REAL4		-459.67f ; Absolute zero in Fahrenheit (update reinstr_temp if you change this or if the laws of thermodynamics change for some reason)
-MIN_POS			REAL4		0.0f ; Zero for positive number validation
-
-KM_RATIO		REAL4		1.60934f
-ML_RATIO		REAL4		29.5735f
-KG_RATIO		REAL4		0.453592f
-
-C_CONST			REAL4		32.0f
-C_RATIO			REAL4		0.5555555555555555555555555555f
+;MIN_F			REAL4		-459.67f ; Absolute zero in Fahrenheit (update reinstr_temp if you change this or if the laws of thermodynamics change for some reason)
+;MIN_POS			REAL4		0.0f ; Zero for positive number validation
+;
+;KM_RATIO		REAL4		1.60934f
+;ML_RATIO		REAL4		29.5735f
+;KG_RATIO		REAL4		0.453592f
+;
+;C_CONST			REAL4		32.0f
+;C_RATIO			REAL4		0.5555555555555555555555555555f
 
 ; (Localizations)
 ec1				BYTE		"**EC         : Performs four different conversions.", CR, LF, 0
