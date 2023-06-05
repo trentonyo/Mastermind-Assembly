@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:32:32
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:38:41
 Mastermind			(AddTwo.asm		     Page 1 - 1
 
 
@@ -312,7 +312,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:32:32
 				; Runs the gameloop TODO contains test code right now
 				; --------------------------------------------------------
 
- 00000008  E8 00000067		call        DrawNewGameboard
+ 00000008  E8 00000042		call        DrawNewGameboard
 
 				mGotoXY     7, 7
  0000000D  B2 07	     1	    mov         dl, 7
@@ -322,133 +322,135 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:32:32
  00000015  E8 00000000 E     1	    call        Gotoxy
 
 
-				; Get the nth element of the background colormap
- 0000001A  6A 04		push        4
- 0000001C  68 00000227 R	push        OFFSET MAP_background_color
- 00000021  6A 04		push        TYPE MAP_background_color
- 00000023  E8 0000011D		call        ArrayAt
+				;; Get the nth element of the background colormap
+				;push        4
+				;push        OFFSET MAP_background_color
+				;push        TYPE MAP_background_color
+				;call        ArrayAt
+				;
+				;; Multiply by 16 to shift to background position
+				;mov         EBX, 16
+				;mul         EBX
+				;
+				;; Preserve background in EBX
+				;mov         EBX, EAX
+				;
+				;; Get the nth element of the foreground colormap
+				;push        4
+				;push        OFFSET MAP_text_color
+				;push        TYPE MAP_text_color
+				;call        ArrayAt
+				;
+				;; Add the background mask back on to EAX
+				;add         EAX, EBX
+				;
+				;; Finally, set the color
+				;call        SetTextColor
 
-				; Multiply by 16 to shift to background position
- 00000028  BB 00000010		mov         EBX, 16
- 0000002D  F7 E3		mul         EBX
-
-				; Preserve background in EBX
- 0000002F  8B D8		mov         EBX, EAX
-
-				; Get the nth element of the foreground colormap
- 00000031  6A 04		push        4
- 00000033  68 00000247 R	push        OFFSET MAP_text_color
- 00000038  6A 04		push        TYPE MAP_text_color
- 0000003A  E8 00000106		call        ArrayAt
-
-				; Add the background mask back on to EAX
- 0000003F  03 C3		add         EAX, EBX
-
-				; Finally, set the color
- 00000041  E8 00000000 E	call        SetTextColor
-
+ 0000001A  6A 02		push        2
+ 0000001C  E8 0000011B		call        SetColorFromPalette
 
 				mPrint      GUI_gameboard_pegs
- 00000046  52		     1	    push        EDX
- 00000047  BA 0000021E R     1	    mov         EDX, OFFSET GUI_gameboard_pegs
- 0000004C  E8 00000000 E     1	    call        WriteString
- 00000051  5A		     1	    pop         EDX
+ 00000021  52		     1	    push        EDX
+ 00000022  BA 0000021E R     1	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000027  E8 00000000 E     1	    call        WriteString
+ 0000002C  5A		     1	    pop         EDX
 
 				mGotoXY     1, 20
- 00000052  B2 01	     1	    mov         dl, 1
- 00000054  FE CA	     1	    dec         dl
- 00000056  B6 14	     1	    mov         dh, 20
- 00000058  FE CE	     1	    dec         dh
- 0000005A  E8 00000000 E     1	    call        Gotoxy
+ 0000002D  B2 01	     1	    mov         dl, 1
+ 0000002F  FE CA	     1	    dec         dl
+ 00000031  B6 14	     1	    mov         dh, 20
+ 00000033  FE CE	     1	    dec         dh
+ 00000035  E8 00000000 E     1	    call        Gotoxy
 
- 0000005F  6A 00		push        FALSE
- 00000061  6A 01		push        TYPE solution
- 00000063  68 00000281 R	push        OFFSET solution
- 00000068  E8 0000008E		call        GenerateCode
+ 0000003A  6A 00		push        FALSE
+ 0000003C  6A 01		push        TYPE solution
+ 0000003E  68 00000281 R	push        OFFSET solution
+ 00000043  E8 0000008E		call        GenerateCode
 
 				exit; exit to operating system
- 0000006D  6A 00	   *	    push   +000000000h
- 0000006F  E8 00000000 E   *	    call   ExitProcess
- 00000074			main ENDP
+ 00000048  6A 00	   *	    push   +000000000h
+ 0000004A  E8 00000000 E   *	    call   ExitProcess
+ 0000004F			main ENDP
 
 				; (insert additional procedures here)
 
 				; -------------------------------------------------------- -
- 00000074			DrawNewGameboard PROC
+ 0000004F			DrawNewGameboard PROC
 				; Author:           Trenton Young
 				; Description:      Simply clears the screen and draws a new gameboard
 				;
 				; Preconditions:    Define global gameboard strings
 				; Postconditions:   Screen is cleared, new gameboard is written
 				; -------------------------------------------------------- -
- 00000074  51			push        ECX
+ 0000004F  51			push        ECX
 
- 00000075  E8 00000000 E	call        Clrscr
+ 00000050  E8 00000000 E	call        Clrscr
 
 				mPrint      GUI_gameboard_A
- 0000007A  52		     1	    push        EDX
- 0000007B  BA 00000000 R     1	    mov         EDX, OFFSET GUI_gameboard_A
- 00000080  E8 00000000 E     1	    call        WriteString
- 00000085  5A		     1	    pop         EDX
+ 00000055  52		     1	    push        EDX
+ 00000056  BA 00000000 R     1	    mov         EDX, OFFSET GUI_gameboard_A
+ 0000005B  E8 00000000 E     1	    call        WriteString
+ 00000060  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_B
- 00000086  52		     1	    push        EDX
- 00000087  BA 00000044 R     1	    mov         EDX, OFFSET GUI_gameboard_B
- 0000008C  E8 00000000 E     1	    call        WriteString
- 00000091  5A		     1	    pop         EDX
+ 00000061  52		     1	    push        EDX
+ 00000062  BA 00000044 R     1	    mov         EDX, OFFSET GUI_gameboard_B
+ 00000067  E8 00000000 E     1	    call        WriteString
+ 0000006C  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_C
- 00000092  52		     1	    push        EDX
- 00000093  BA 00000088 R     1	    mov         EDX, OFFSET GUI_gameboard_C
- 00000098  E8 00000000 E     1	    call        WriteString
- 0000009D  5A		     1	    pop         EDX
+ 0000006D  52		     1	    push        EDX
+ 0000006E  BA 00000088 R     1	    mov         EDX, OFFSET GUI_gameboard_C
+ 00000073  E8 00000000 E     1	    call        WriteString
+ 00000078  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_DE
- 0000009E  52		     1	    push        EDX
- 0000009F  BA 000000CC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
- 000000A4  E8 00000000 E     1	    call        WriteString
- 000000A9  5A		     1	    pop         EDX
+ 00000079  52		     1	    push        EDX
+ 0000007A  BA 000000CC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
+ 0000007F  E8 00000000 E     1	    call        WriteString
+ 00000084  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_DE
- 000000AA  52		     1	    push        EDX
- 000000AB  BA 000000CC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
- 000000B0  E8 00000000 E     1	    call        WriteString
- 000000B5  5A		     1	    pop         EDX
+ 00000085  52		     1	    push        EDX
+ 00000086  BA 000000CC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
+ 0000008B  E8 00000000 E     1	    call        WriteString
+ 00000090  5A		     1	    pop         EDX
 
- 000000B6  B9 00000004		mov         ECX, ROWS
- 000000BB			_printPlayArea:
+ 00000091  B9 00000004		mov         ECX, ROWS
+ 00000096			_printPlayArea:
 				    mPrint      GUI_gameboard_SPACE
- 000000BB  52		     1	    push        EDX
- 000000BC  BA 00000110 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
- 000000C1  E8 00000000 E     1	    call        WriteString
- 000000C6  5A		     1	    pop         EDX
+ 00000096  52		     1	    push        EDX
+ 00000097  BA 00000110 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
+ 0000009C  E8 00000000 E     1	    call        WriteString
+ 000000A1  5A		     1	    pop         EDX
 				    mPrint      GUI_gameboard_PEG
- 000000C7  52		     1	    push        EDX
- 000000C8  BA 00000154 R     1	    mov         EDX, OFFSET GUI_gameboard_PEG
- 000000CD  E8 00000000 E     1	    call        WriteString
- 000000D2  5A		     1	    pop         EDX
+ 000000A2  52		     1	    push        EDX
+ 000000A3  BA 00000154 R     1	    mov         EDX, OFFSET GUI_gameboard_PEG
+ 000000A8  E8 00000000 E     1	    call        WriteString
+ 000000AD  5A		     1	    pop         EDX
 
- 000000D3  E2 E6		    loop        _printPlayArea
+ 000000AE  E2 E6		    loop        _printPlayArea
 
 				mPrint      GUI_gameboard_ACCENT
- 000000D5  52		     1	    push        EDX
- 000000D6  BA 00000198 R     1	    mov         EDX, OFFSET GUI_gameboard_ACCENT
- 000000DB  E8 00000000 E     1	    call        WriteString
- 000000E0  5A		     1	    pop         EDX
+ 000000B0  52		     1	    push        EDX
+ 000000B1  BA 00000198 R     1	    mov         EDX, OFFSET GUI_gameboard_ACCENT
+ 000000B6  E8 00000000 E     1	    call        WriteString
+ 000000BB  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_SPACE
- 000000E1  52		     1	    push        EDX
- 000000E2  BA 00000110 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
- 000000E7  E8 00000000 E     1	    call        WriteString
- 000000EC  5A		     1	    pop         EDX
+ 000000BC  52		     1	    push        EDX
+ 000000BD  BA 00000110 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
+ 000000C2  E8 00000000 E     1	    call        WriteString
+ 000000C7  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_Z
- 000000ED  52		     1	    push        EDX
- 000000EE  BA 000001DC R     1	    mov         EDX, OFFSET GUI_gameboard_Z
- 000000F3  E8 00000000 E     1	    call        WriteString
- 000000F8  5A		     1	    pop         EDX
+ 000000C8  52		     1	    push        EDX
+ 000000C9  BA 000001DC R     1	    mov         EDX, OFFSET GUI_gameboard_Z
+ 000000CE  E8 00000000 E     1	    call        WriteString
+ 000000D3  5A		     1	    pop         EDX
 
- 000000F9  59			pop         ECX
+ 000000D4  59			pop         ECX
 
- 000000FA  C3			ret
- 000000FB			DrawNewGameboard ENDP
+ 000000D5  C3			ret
+ 000000D6			DrawNewGameboard ENDP
 
 				; -------------------------------------------------------- -
- 000000FB			GenerateCode PROC
+ 000000D6			GenerateCode PROC
 				; Author:           Trenton Young
 				; Description:      Generates a code of the length defined by the
 				;                   const CODE_LENGTH, if TRUE is passed as a
@@ -462,66 +464,66 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:32:32
 				; Preconditions:    Define global const CODE_LENGTH
 				; Postconditions:   Target will contain the new code
 				; -------------------------------------------------------- -
- 000000FB  55			push        EBP
- 000000FC  8B EC		mov         EBP, ESP    ; register-indirect initialization
+ 000000D6  55			push        EBP
+ 000000D7  8B EC		mov         EBP, ESP    ; register-indirect initialization
 
- 000000FE  50			push        EAX
- 000000FF  53			push        EBX
- 00000100  51			push        ECX
- 00000101  52			push        EDX
+ 000000D9  50			push        EAX
+ 000000DA  53			push        EBX
+ 000000DB  51			push        ECX
+ 000000DC  52			push        EDX
 
- 00000102			_stackFrame:
- 00000102  B9 00000004		    mov     ECX, CODE_LENGTH
- 00000107  8B 55 10		    mov     EDX, [EBP + 16]         ; [OPTIONAL] if TRUE, will allow duplicates in code
- 0000010A  8B 5D 0C		    mov     EBX, [EBP + 12]         ; TYPE of target array
- 0000010D  8B 45 08		    mov     EAX, [EBP + 8]          ; OFFSET of target array
+ 000000DD			_stackFrame:
+ 000000DD  B9 00000004		    mov     ECX, CODE_LENGTH
+ 000000E2  8B 55 10		    mov     EDX, [EBP + 16]         ; [OPTIONAL] if TRUE, will allow duplicates in code
+ 000000E5  8B 5D 0C		    mov     EBX, [EBP + 12]         ; TYPE of target array
+ 000000E8  8B 45 08		    mov     EAX, [EBP + 8]          ; OFFSET of target array
 
- 00000110			_generateCode:
- 00000110  51			    push    ECX                     ; Preserve loop counter
+ 000000EB			_generateCode:
+ 000000EB  51			    push    ECX                     ; Preserve loop counter
 
 				    mArand  1, COLORS, ECX          ; Get a random number and store to EDX
- 00000111  50		     1	    push        EAX
- 00000112  B8 00000008	     1	    mov         EAX, COLORS
- 00000117  83 E8 01	     1	    sub         EAX, 1
- 0000011A  40		     1	    inc         EAX
- 0000011B  E8 00000000 E     1	    call        RandomRange
- 00000120  83 C0 01	     1	    add         EAX, 1
- 00000123  8B C8	     1	    mov         ECX, EAX
- 00000125  58		     1	    pop         EAX
+ 000000EC  50		     1	    push        EAX
+ 000000ED  B8 00000008	     1	    mov         EAX, COLORS
+ 000000F2  83 E8 01	     1	    sub         EAX, 1
+ 000000F5  40		     1	    inc         EAX
+ 000000F6  E8 00000000 E     1	    call        RandomRange
+ 000000FB  83 C0 01	     1	    add         EAX, 1
+ 000000FE  8B C8	     1	    mov         ECX, EAX
+ 00000100  58		     1	    pop         EAX
 
- 00000126  83 FA 01		    cmp     EDX, TRUE
- 00000129  74 0B		    je     _allowDuplicates
+ 00000101  83 FA 01		    cmp     EDX, TRUE
+ 00000104  74 0B		    je     _allowDuplicates
 
 				    ; ELSE, check if random number is already in code
- 0000012B  8B D1		    mov     EDX, ECX                ; EDX is now random number
- 0000012D  59			    pop     ECX                     ; ECX is loop counter again
+ 00000106  8B D1		    mov     EDX, ECX                ; EDX is now random number
+ 00000108  59			    pop     ECX                     ; ECX is loop counter again
 
 				    ; TODO check code, can probably somehow use the code checking proc that needs to be written for gameplay
 
- 0000012E  51			    push    ECX                     ; _allowDuplicates expects a floating loop counter
- 0000012F  8B CA		    mov     ECX, EDX                ; and for the random number to be stored in ECX
- 00000131  BA 00000000		    mov     EDX, FALSE              ; reset EDX to FALSE, it was overwritten in this process and we know it to be false
- 00000136			    _allowDuplicates:
- 00000136  89 08		    mov     [EAX], ECX              ; Store in next index
+ 00000109  51			    push    ECX                     ; _allowDuplicates expects a floating loop counter
+ 0000010A  8B CA		    mov     ECX, EDX                ; and for the random number to be stored in ECX
+ 0000010C  BA 00000000		    mov     EDX, FALSE              ; reset EDX to FALSE, it was overwritten in this process and we know it to be false
+ 00000111			    _allowDuplicates:
+ 00000111  89 08		    mov     [EAX], ECX              ; Store in next index
 
- 00000138  59			    pop     ECX                     ; restore loop counter
+ 00000113  59			    pop     ECX                     ; restore loop counter
 
- 00000139  03 C3		    add     EAX, EBX                ; Increment index
+ 00000114  03 C3		    add     EAX, EBX                ; Increment index
 
- 0000013B  E2 D3		    loop    _generateCode
+ 00000116  E2 D3		    loop    _generateCode
 
- 0000013D  5A			pop         EDX
- 0000013E  59			pop         ECX
- 0000013F  5B			pop         EBX
- 00000140  58			pop         EAX
- 00000141  5D			pop         EBP
+ 00000118  5A			pop         EDX
+ 00000119  59			pop         ECX
+ 0000011A  5B			pop         EBX
+ 0000011B  58			pop         EAX
+ 0000011C  5D			pop         EBP
 
- 00000142  C2 000C		ret         12
- 00000145			GenerateCode ENDP
+ 0000011D  C2 000C		ret         12
+ 00000120			GenerateCode ENDP
 
 
 				; -------------------------------------------------------- -
- 00000145			ArrayAt PROC
+ 00000120			ArrayAt PROC
 				; Author:           Trenton Young
 				; Description:      Gets the nth element from an array and stores
 				;                   it in EAX
@@ -533,33 +535,88 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:32:32
 				;
 				; Postconditions:   EAX will contain the value of array[n]
 				; -------------------------------------------------------- -
- 00000145  55			push                EBP
- 00000146  8B EC		mov                 EBP, ESP
+ 00000120  55			push                EBP
+ 00000121  8B EC		mov                 EBP, ESP
 
- 00000148  53			push                EBX
- 00000149  51			push                ECX
- 0000014A  52			push                EDX
+ 00000123  53			push                EBX
+ 00000124  51			push                ECX
+ 00000125  52			push                EDX
 
- 0000014B			_stackFrame:
- 0000014B  8B 45 10		    mov             EAX, [EBP + 16]         ; n
- 0000014E  8B 5D 0C		    mov             EBX, [EBP + 12]         ; OFFSET array
- 00000151  8B 4D 08		    mov             ECX, [EBP + 8]          ; TYPE array
+ 00000126			_stackFrame:
+ 00000126  8B 45 10		    mov             EAX, [EBP + 16]         ; n
+ 00000129  8B 5D 0C		    mov             EBX, [EBP + 12]         ; OFFSET array
+ 0000012C  8B 4D 08		    mov             ECX, [EBP + 8]          ; TYPE array
 
- 00000154  F7 E1		mul                 ECX                     ; Multiply n by the type of the array
- 00000156  03 D8		add                 EBX, EAX                ; Get to array[n]
- 00000158  8B 03		mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
+ 0000012F  F7 E1		mul                 ECX                     ; Multiply n by the type of the array
+ 00000131  03 D8		add                 EBX, EAX                ; Get to array[n]
+ 00000133  8B 03		mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
 
- 0000015A  5A			pop                 EDX
- 0000015B  59			pop                 ECX
- 0000015C  5B			pop                 EBX
+ 00000135  5A			pop                 EDX
+ 00000136  59			pop                 ECX
+ 00000137  5B			pop                 EBX
 
- 0000015D  5D			pop                 EBP
+ 00000138  5D			pop                 EBP
 
- 0000015E  C2 000C		ret 12
- 00000161			ArrayAt ENDP
+ 00000139  C2 000C		ret 12
+ 0000013C			ArrayAt ENDP
+
+				; -------------------------------------------------------- -
+ 0000013C			SetColorFromPalette PROC
+				; Author:           Trenton Young
+				; Description:      Sets the text color to predefined palette
+				;
+				; Parameters:       push n
+				;                   call
+				;
+				; Preconditions:    Parallel arrays for text and background colors
+				; Postconditions:   Text color is changed
+				; -------------------------------------------------------- -
+ 0000013C  55			push                EBP
+ 0000013D  8B EC		mov                 EBP, ESP
+
+ 0000013F  50			push                EAX
+ 00000140  53			push                EBX
+ 00000141  51			push                ECX
+
+ 00000142			_stackFrame:
+ 00000142  8B 4D 08		    mov             ECX, [EBP + 8]          ; n
+
+				; Get the nth element of the background colormap
+ 00000145  51			push                ECX
+ 00000146  68 00000227 R	push                OFFSET MAP_background_color
+ 0000014B  6A 04		push                TYPE MAP_background_color
+ 0000014D  E8 FFFFFFCE		call                ArrayAt
+
+				; Multiply by 16 to shift to background position
+ 00000152  BB 00000010		mov                 EBX, 16
+ 00000157  F7 E3		mul                 EBX
+
+				; Preserve background in EBX
+ 00000159  8B D8		mov                 EBX, EAX
+
+				; Get the nth element of the foreground colormap
+ 0000015B  51			push                ECX
+ 0000015C  68 00000247 R	push                OFFSET MAP_text_color
+ 00000161  6A 04		push                TYPE MAP_text_color
+ 00000163  E8 FFFFFFB8		call                ArrayAt
+
+				; Add the background mask back on to EAX
+ 00000168  03 C3		add                 EAX, EBX
+
+				; Finally, set the color
+ 0000016A  E8 00000000 E	call                SetTextColor
+
+ 0000016F  59			pop                 ECX
+ 00000170  5B			pop                 EBX
+ 00000171  58			pop                 EAX
+
+ 00000172  5D			pop                 EBP
+
+ 00000173  C2 0004		ret 4
+ 00000176			SetColorFromPalette ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:32:32
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/05/23 15:38:41
 Mastermind			(AddTwo.asm		     Symbols 2 - 1
 
 
@@ -664,15 +721,15 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 000002A5 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000161 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000176 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
-ArrayAt  . . . . . . . . . . . .	P Near	 00000145 _TEXT	Length= 0000001C Public STDCALL
-  _stackFrame  . . . . . . . . .	L Near	 0000014B _TEXT	
+ArrayAt  . . . . . . . . . . . .	P Near	 00000120 _TEXT	Length= 0000001C Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 00000126 _TEXT	
 CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -680,8 +737,8 @@ CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 CreateOutputFile . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Crlf . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Delay  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-DrawNewGameboard . . . . . . . .	P Near	 00000074 _TEXT	Length= 00000087 Public STDCALL
-  _printPlayArea . . . . . . . .	L Near	 000000BB _TEXT	
+DrawNewGameboard . . . . . . . .	P Near	 0000004F _TEXT	Length= 00000087 Public STDCALL
+  _printPlayArea . . . . . . . .	L Near	 00000096 _TEXT	
 DumpMem  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 DumpRegs . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -689,10 +746,10 @@ FileTimeToDosDateTime  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 FileTimeToSystemTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 FlushConsoleInputBuffer  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 FormatMessageA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-GenerateCode . . . . . . . . . .	P Near	 000000FB _TEXT	Length= 0000004A Public STDCALL
-  _stackFrame  . . . . . . . . .	L Near	 00000102 _TEXT	
-  _generateCode  . . . . . . . .	L Near	 00000110 _TEXT	
-  _allowDuplicates . . . . . . .	L Near	 00000136 _TEXT	
+GenerateCode . . . . . . . . . .	P Near	 000000D6 _TEXT	Length= 0000004A Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 000000DD _TEXT	
+  _generateCode  . . . . . . . .	L Near	 000000EB _TEXT	
+  _allowDuplicates . . . . . . .	L Near	 00000111 _TEXT	
 GetCommandLineA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetCommandTail . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetConsoleCP . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -742,6 +799,8 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+SetColorFromPalette  . . . . . .	P Near	 0000013C _TEXT	Length= 0000003A Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 00000142 _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -779,7 +838,7 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000074 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000004F Public STDCALL
   setup  . . . . . . . . . . . .	L Near	 00000000 _TEXT	
   gameplay . . . . . . . . . . .	L Near	 00000008 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C

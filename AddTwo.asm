@@ -167,32 +167,8 @@ call        DrawNewGameboard
 
 mGotoXY     7, 7
 
-
-; Get the nth element of the background colormap
-push        4
-push        OFFSET MAP_background_color
-push        TYPE MAP_background_color
-call        ArrayAt
-
-; Multiply by 16 to shift to background position
-mov         EBX, 16
-mul         EBX
-
-; Preserve background in EBX
-mov         EBX, EAX
-
-; Get the nth element of the foreground colormap
-push        4
-push        OFFSET MAP_text_color
-push        TYPE MAP_text_color
-call        ArrayAt
-
-; Add the background mask back on to EAX
-add         EAX, EBX
-
-; Finally, set the color
-call        SetTextColor
-
+push        2
+call        SetColorFromPalette
 
 mPrint      GUI_gameboard_pegs
 
@@ -344,5 +320,60 @@ pop                 EBP
 
 ret 12
 ArrayAt ENDP
+
+; -------------------------------------------------------- -
+SetColorFromPalette PROC
+; Author:           Trenton Young
+; Description:      Sets the text color to predefined palette
+;
+; Parameters:       push n
+;                   call
+;
+; Preconditions:    Parallel arrays for text and background colors
+; Postconditions:   Text color is changed
+; -------------------------------------------------------- -
+push                EBP
+mov                 EBP, ESP
+
+push                EAX
+push                EBX
+push                ECX
+
+_stackFrame:
+    mov             ECX, [EBP + 8]          ; n
+
+; Get the nth element of the background colormap
+push                ECX
+push                OFFSET MAP_background_color
+push                TYPE MAP_background_color
+call                ArrayAt
+
+; Multiply by 16 to shift to background position
+mov                 EBX, 16
+mul                 EBX
+
+; Preserve background in EBX
+mov                 EBX, EAX
+
+; Get the nth element of the foreground colormap
+push                ECX
+push                OFFSET MAP_text_color
+push                TYPE MAP_text_color
+call                ArrayAt
+
+; Add the background mask back on to EAX
+add                 EAX, EBX
+
+; Finally, set the color
+call                SetTextColor
+
+pop                 ECX
+pop                 EBX
+pop                 EAX
+
+pop                 EBP
+
+ret 4
+SetColorFromPalette ENDP
 
 END main
