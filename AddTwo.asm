@@ -95,6 +95,22 @@ mArrayFlatten   MACRO _ROW, _COL, _baseAddress, _size, _rowSize, _target
     pop         EAX
 ENDM
 
+; --------------------------------------------------------
+mGotoXY         MACRO _x, _y
+; Author:       Trenton Young
+; Description:  Simple wrapper for Irvine Library's gotoxy,
+;               does not preserve dl or dh
+;
+; Use:          Pass an X and Y value (0-indexed) to move
+;               the cursor
+; --------------------------------------------------------
+    mov         dl, _x
+    dec         dl
+    mov         dh, _y
+    dec         dh
+    call        Gotoxy
+ENDM
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -147,6 +163,11 @@ gameplay:
 ; --------------------------------------------------------
 
 call        DrawNewGameboard
+
+mGotoXY     7, 7
+mPrint      GUI_gameboard_pegs
+
+mGotoXY     1, 20
 
 push        FALSE
 push        TYPE solution
