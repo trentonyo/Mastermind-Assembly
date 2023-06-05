@@ -217,14 +217,28 @@ _stackFrame:
     mov     EAX, [EBP + 8]          ; OFFSET of target array
 
 _generateCode:
-    push    EDX
+    push    ECX                     ; Preserve loop counter
 
-    mArand  1, COLORS, EDX          ; Get a random number and store to EDX
-    mov     [EAX], EDX              ; Store in next index TODO check for duplicates
+    mArand  1, COLORS, ECX          ; Get a random number and store to EDX
 
-    pop     EDX
+    cmp     EDX, TRUE
+    je     _allowDuplicates
 
-    add     EAX, EDX                ; Increment index
+    ; ELSE, check if random number is already in code
+    mov     EDX, ECX                ; EDX is now random number
+    pop     ECX                     ; ECX is loop counter again
+
+    ; TODO check code, can probably somehow use the code checking proc that needs to be written for gameplay
+
+    push    ECX                     ; _allowDuplicates expects a floating loop counter
+    mov     ECX, EDX                ; and for the random number to be stored in ECX
+    mov     EDX, FALSE              ; reset EDX to FALSE, it was overwritten in this process and we know it to be false
+    _allowDuplicates:
+    mov     [EAX], ECX              ; Store in next index
+
+    pop     ECX                     ; restore loop counter
+
+    add     EAX, EBX                ; Increment index
 
     loop    _generateCode
 
@@ -233,7 +247,8 @@ pop         ECX
 pop         EBX
 pop         EAX
 pop         EBP
-ret
+
+ret         12
 GenerateCode ENDP
 
 END main
