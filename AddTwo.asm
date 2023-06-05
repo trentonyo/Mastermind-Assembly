@@ -48,7 +48,7 @@ GUI_gameboard_PEG           BYTE        "#    [  ]    [  ]    [  ]    [  ]    [ 
 GUI_gameboard_ACCENT        BYTE        "#    ----    ----    ----    ----    ----    ----    #          #", CR, LF, 0
 GUI_gameboard_Z             BYTE        "#################################################################", 0
 
-GUI_gameboard_peg           BYTE        "-@", 0         ; ASCII for a game peg
+GUI_gameboard_pegs          BYTE        "-@", 0         ; ASCII for a game peg
 
 GUI_feedback_hit            BYTE        "o", 0
 GUI_feedback_blow           BYTE        "*", 0
