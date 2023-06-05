@@ -114,11 +114,16 @@ GUI_feedback_hit            BYTE        "o", 0
 GUI_feedback_blow           BYTE        "*", 0
 GUI_feedback_none           BYTE        ".", 0
 
+MAP_background_color        DWORD       red,            gray,           green,          blue,           yellow,         cyan,           magenta,        brown
+MAP_text_color              DWORD       white,          white,          black,          white,          black,          black,          black,          white
+
 ; (Localizations)           Define any messages to be displayed here
 
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 
 ; (Gamestate)               Variables defining gameplay
+
+current_round               BYTE        0
 
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))

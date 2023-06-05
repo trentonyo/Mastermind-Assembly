@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 19:06:49
 Mastermind			(AddTwo.asm		     Page 1 - 1
 
 
@@ -239,9 +239,26 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
  00000223 2A 00			GUI_feedback_blow           BYTE        "*", 0
  00000225 2E 00			GUI_feedback_none           BYTE        ".", 0
 
+ 00000227 00000004		MAP_background_color        DWORD       red,            gray,           green,          blue,           yellow,         cyan,           magenta,        brown
+	   00000008
+	   00000002
+	   00000001
+	   0000000E
+	   00000003
+	   00000005
+	   00000006
+ 00000247 0000000F		MAP_text_color              DWORD       white,          white,          black,          white,          black,          black,          black,          white
+	   0000000F
+	   00000000
+	   0000000F
+	   00000000
+	   00000000
+	   00000000
+	   0000000F
+
 				; (Localizations)           Define any messages to be displayed here
 
- 00000227 4C 65 74 27 73	greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
+ 00000267 4C 65 74 27 73	greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 	   20 70 6C 61 79
 	   20 4D 41 53 54
 	   45 52 4D 49 4E
@@ -249,10 +266,12 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
 
 				; (Gamestate)               Variables defining gameplay
 
- 00000240  00000004 [		solution                    BYTE        CODE_LENGTH DUP(?)
+ 00000280 00			current_round               BYTE        0
+
+ 00000281  00000004 [		solution                    BYTE        CODE_LENGTH DUP(?)
 	    00
 	   ]
- 00000244  00000004 [		game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
+ 00000285  00000004 [		game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 	    00000008 [
 	     00
 	    ]
@@ -280,7 +299,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
 
  0000000D  6A 00		push        FALSE
  0000000F  6A 01		push        TYPE solution
- 00000011  68 00000240 R	push        OFFSET solution
+ 00000011  68 00000281 R	push        OFFSET solution
  00000016  E8 0000008E		call        GenerateCode
 
 				exit; exit to operating system
@@ -323,7 +342,6 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
  00000052  E8 00000000 E     1	    call        WriteString
  00000057  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_DE
-
  00000058  52		     1	    push        EDX
  00000059  BA 000000CC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
  0000005E  E8 00000000 E     1	    call        WriteString
@@ -438,7 +456,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
  000000F3			GenerateCode ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:52:35
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 19:06:49
 Mastermind			(AddTwo.asm		     Symbols 2 - 1
 
 
@@ -541,7 +559,7 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000264 Para	  Public  'DATA'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 000002A5 Para	  Public  'DATA'	
 _TEXT  . . . . . . . . . . . . .	32 Bit	 000000F3 Para	  Public  'CODE'	
 
 
@@ -766,6 +784,8 @@ KEY_MASKS  . . . . . . . . . . .	Number	 0000001Fh
 LEFT_ALT_PRESSED . . . . . . . .	Number	 00000002h   
 LEFT_CTRL_PRESSED  . . . . . . .	Number	 00000008h   
 LF . . . . . . . . . . . . . . .	Number	 0000000Ah   
+MAP_background_color . . . . . .	DWord	 00000227 _DATA	
+MAP_text_color . . . . . . . . .	DWord	 00000247 _DATA	
 MB_ABORTRETRYIGNORE  . . . . . .	Number	 00000002h   
 MB_APPLMODAL . . . . . . . . . .	Number	 00000000h   
 MB_CANCELTRYCONTINUE . . . . . .	Number	 00000006h   
@@ -899,12 +919,13 @@ WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 black  . . . . . . . . . . . . .	Number	 00000000h   
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
+current_round  . . . . . . . . .	Byte	 00000280 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
-game_matrix  . . . . . . . . . .	Byte	 00000244 _DATA	
+game_matrix  . . . . . . . . . .	Byte	 00000285 _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
-greeting . . . . . . . . . . . .	Byte	 00000227 _DATA	
+greeting . . . . . . . . . . . .	Byte	 00000267 _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -913,7 +934,7 @@ lightMagenta . . . . . . . . . .	Number	 0000000Dh
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
 red  . . . . . . . . . . . . . .	Number	 00000004h   
-solution . . . . . . . . . . . .	Byte	 00000240 _DATA	
+solution . . . . . . . . . . . .	Byte	 00000281 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
