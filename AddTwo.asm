@@ -21,18 +21,42 @@ ROWS = CODE_LENGTH                  ;
 
 COLORS = 8                          ; Number of colored pegs the game uses
 
-mSwap           MACRO       a, b
-    push        EAX
-    push        EBX
 
-    mov         EAX, a
-    mov         EBX, b
+; --------------------------------------------------------
+mPrint              MACRO str
+; Author:       Trenton Young
+; Description:  Basic wrapper for Irvine's WriteString
+;
+; Use:          Pass a string, not the OFFSET
+; --------------------------------------------------------
+    push                EDX
 
-    mov         b, EAX
-    mov         a, EBX
+    mov                 EDX, OFFSET str
+    call                WriteString
 
-    pop         EBX
-    pop         EAX
+    pop                 EDX
+ENDM
+
+; --------------------------------------------------------
+mArand              MACRO _low, _high, _target
+; Author:       Trenton Young
+; Description:  Random range from Irvine's WriteString,
+;               output is stored in given register
+;
+; Use:          _low and _high may be literals, _target may
+;               be a register
+; --------------------------------------------------------
+    push    EAX
+
+    mov     EAX, _high
+    sub     EAX, _low
+    inc     EAX
+    call    RandomRange
+    add     EAX, _low
+
+    mov     _target, EAX
+
+    pop     EAX
 ENDM
 
 .data
@@ -69,6 +93,7 @@ setup:
 ; --------------------------------------------------------
 finit
 
+call        DrawNewGameboard
 
 exit; exit to operating system
 main ENDP
@@ -76,48 +101,38 @@ main ENDP
 ; (insert additional procedures here)
 
 ; -------------------------------------------------------- -
-GetUserTemps PROC uses ECX EDX ESI
+DrawNewGameboard PROC
+; Author:           Trenton Young
+; Description:      Simply clears the screen and draws a new gameboard
 ;
-; Prompts user for the temperatures they want converted
-; Preconditions: Define a global DWORD array of size MAX_ARGS called users_temp_arr
-; Postconditions: Updates users_temp_arr array in memory
+; Preconditions:    Define global gameboard strings
+; Postconditions:   Screen is cleared, new gameboard is written
 ; -------------------------------------------------------- -
+push        ECX
 
-; get temperatures(first because it has different validation)
-;mov			ECX, MAX_ARGS					; Loop a number of times equal to the maximum arguments allowed
-;mov			ESI, 0
-;
-;_getTempInput:
-;	mov			EDX, OFFSET	instruct_temp
-;	call		WriteString
-;
-;_skipTempInstruct:
-;	fld			MIN_F						; ST(0) = MIN_F
-;	call		ReadFloat					; ST(0) = input, ST(1) = MIN_F
-;
-;
-;	fcomi		ST(0), ST(1)				; Compare User input to MIN_F  for validation
-;	jb			_invalidTempInput
-;
-;
-;	fstp		[users_temp_arr + ESI]		; Pop the user input into the temperature array
-;	fstp		ST(0)						; Pop the comparison value (Credit to PhiS on StackOverflow : https://stackoverflow.com/a/4810464)
-;
-;	add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
-;
-;	loop		_getTempInput
-;	jmp			_exitTempInput
-;
-;	_invalidTempInput:
-;		push		EDX
-;		mov			EDX, OFFSET	reinstr_temp
-;		call		WriteString
-;		pop			EDX
-;		jmp			_skipTempInstruct
-;_exitTempInput:
-;
+call        Clrscr
+
+mPrint      GUI_gameboard_A
+mPrint      GUI_gameboard_B
+mPrint      GUI_gameboard_C
+mPrint      GUI_gameboard_DE
+mPrint      GUI_gameboard_DE
+
+mov         ECX, ROWS
+_printPlayArea:
+    mPrint      GUI_gameboard_SPACE
+    mPrint      GUI_gameboard_PEG
+
+    loop        _printPlayArea
+
+mPrint      GUI_gameboard_ACCENT
+mPrint      GUI_gameboard_SPACE
+mPrint      GUI_gameboard_Z
+
+pop         ECX
+
 ret
-GetUserTemps ENDP
+DrawNewGameboard ENDP
 
 
 END main

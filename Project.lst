@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:41:17
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 Mastermind			(AddTwo.asm		     Page 1 - 1
 
 
@@ -42,18 +42,42 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:41:17
 
  = 00000008			COLORS = 8                          ; Number of colored pegs the game uses
 
-				mSwap           MACRO       a, b
-				    push        EAX
-				    push        EBX
 
-				    mov         EAX, a
-				    mov         EBX, b
+				; --------------------------------------------------------
+				mPrint              MACRO str
+				; Author:       Trenton Young
+				; Description:  Basic wrapper for Irvine's WriteString
+				;
+				; Use:          Pass a string, not the OFFSET
+				; --------------------------------------------------------
+				    push                EDX
 
-				    mov         b, EAX
-				    mov         a, EBX
+				    mov                 EDX, OFFSET str
+				    call                WriteString
 
-				    pop         EBX
-				    pop         EAX
+				    pop                 EDX
+				ENDM
+
+				; --------------------------------------------------------
+				mArand              MACRO _low, _high, _target
+				; Author:       Trenton Young
+				; Description:  Random range from Irvine's WriteString,
+				;               output is stored in given register
+				;
+				; Use:          _low and _high may be literals, _target may
+				;               be a register
+				; --------------------------------------------------------
+				    push    EAX
+
+				    mov     EAX, _high
+				    sub     EAX, _low
+				    inc     EAX
+				    call    RandomRange
+				    add     EAX, _low
+
+				    mov     _target, EAX
+
+				    pop     EAX
 				ENDM
 
  00000000			.data
@@ -194,68 +218,92 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:41:17
 				; --------------------------------------------------------
  00000000  9B DB E3		finit
 
+ 00000003  E8 00000007		call        DrawNewGameboard
 
 				exit; exit to operating system
- 00000003  6A 00	   *	    push   +000000000h
- 00000005  E8 00000000 E   *	    call   ExitProcess
- 0000000A			main ENDP
+ 00000008  6A 00	   *	    push   +000000000h
+ 0000000A  E8 00000000 E   *	    call   ExitProcess
+ 0000000F			main ENDP
 
 				; (insert additional procedures here)
 
 				; -------------------------------------------------------- -
- 0000000A			GetUserTemps PROC uses ECX EDX ESI
+ 0000000F			DrawNewGameboard PROC
+				; Author:           Trenton Young
+				; Description:      Simply clears the screen and draws a new gameboard
 				;
-				; Prompts user for the temperatures they want converted
-				; Preconditions: Define a global DWORD array of size MAX_ARGS called users_temp_arr
-				; Postconditions: Updates users_temp_arr array in memory
+				; Preconditions:    Define global gameboard strings
+				; Postconditions:   Screen is cleared, new gameboard is written
 				; -------------------------------------------------------- -
+ 0000000F  51			push        ECX
 
-				; get temperatures(first because it has different validation)
-				;mov			ECX, MAX_ARGS					; Loop a number of times equal to the maximum arguments allowed
-				;mov			ESI, 0
-				;
-				;_getTempInput:
-				;	mov			EDX, OFFSET	instruct_temp
-				;	call		WriteString
-				;
-				;_skipTempInstruct:
-				;	fld			MIN_F						; ST(0) = MIN_F
-				;	call		ReadFloat					; ST(0) = input, ST(1) = MIN_F
-				;
-				;
-				;	fcomi		ST(0), ST(1)				; Compare User input to MIN_F  for validation
-				;	jb			_invalidTempInput
-				;
-				;
-				;	fstp		[users_temp_arr + ESI]		; Pop the user input into the temperature array
-				;	fstp		ST(0)						; Pop the comparison value (Credit to PhiS on StackOverflow : https://stackoverflow.com/a/4810464)
-				;
-				;	add			ESI, 4						; Increment the index by 4 bytes(the size of a real4)
-				;
-				;	loop		_getTempInput
-				;	jmp			_exitTempInput
-				;
-				;	_invalidTempInput:
-				;		push		EDX
-				;		mov			EDX, OFFSET	reinstr_temp
-				;		call		WriteString
-				;		pop			EDX
-				;		jmp			_skipTempInstruct
-				;_exitTempInput:
-				;
- 0000000A  51		   *	    push   ecx
- 0000000B  52		   *	    push   edx
- 0000000C  56		   *	    push   esi
-				ret
- 0000000D  5E		   *	    pop    esi
- 0000000E  5A		   *	    pop    edx
- 0000000F  59		   *	    pop    ecx
- 00000010  C3		   *	    ret    00000h
- 00000011			GetUserTemps ENDP
+ 00000010  E8 00000000 E	call        Clrscr
+
+				mPrint      GUI_gameboard_A
+ 00000015  52		     1	    push                EDX
+ 00000016  BA 00000000 R     1	    mov                 EDX, OFFSET GUI_gameboard_A
+ 0000001B  E8 00000000 E     1	    call                WriteString
+ 00000020  5A		     1	    pop                 EDX
+				mPrint      GUI_gameboard_B
+ 00000021  52		     1	    push                EDX
+ 00000022  BA 00000044 R     1	    mov                 EDX, OFFSET GUI_gameboard_B
+ 00000027  E8 00000000 E     1	    call                WriteString
+ 0000002C  5A		     1	    pop                 EDX
+				mPrint      GUI_gameboard_C
+ 0000002D  52		     1	    push                EDX
+ 0000002E  BA 00000088 R     1	    mov                 EDX, OFFSET GUI_gameboard_C
+ 00000033  E8 00000000 E     1	    call                WriteString
+ 00000038  5A		     1	    pop                 EDX
+				mPrint      GUI_gameboard_DE
+ 00000039  52		     1	    push                EDX
+ 0000003A  BA 000000CC R     1	    mov                 EDX, OFFSET GUI_gameboard_DE
+ 0000003F  E8 00000000 E     1	    call                WriteString
+ 00000044  5A		     1	    pop                 EDX
+				mPrint      GUI_gameboard_DE
+ 00000045  52		     1	    push                EDX
+ 00000046  BA 000000CC R     1	    mov                 EDX, OFFSET GUI_gameboard_DE
+ 0000004B  E8 00000000 E     1	    call                WriteString
+ 00000050  5A		     1	    pop                 EDX
+
+ 00000051  B9 00000004		mov         ECX, ROWS
+ 00000056			_printPlayArea:
+				    mPrint      GUI_gameboard_SPACE
+ 00000056  52		     1	    push                EDX
+ 00000057  BA 00000110 R     1	    mov                 EDX, OFFSET GUI_gameboard_SPACE
+ 0000005C  E8 00000000 E     1	    call                WriteString
+ 00000061  5A		     1	    pop                 EDX
+				    mPrint      GUI_gameboard_PEG
+ 00000062  52		     1	    push                EDX
+ 00000063  BA 00000154 R     1	    mov                 EDX, OFFSET GUI_gameboard_PEG
+ 00000068  E8 00000000 E     1	    call                WriteString
+ 0000006D  5A		     1	    pop                 EDX
+
+ 0000006E  E2 E6		    loop        _printPlayArea
+
+				mPrint      GUI_gameboard_ACCENT
+ 00000070  52		     1	    push                EDX
+ 00000071  BA 00000198 R     1	    mov                 EDX, OFFSET GUI_gameboard_ACCENT
+ 00000076  E8 00000000 E     1	    call                WriteString
+ 0000007B  5A		     1	    pop                 EDX
+				mPrint      GUI_gameboard_SPACE
+ 0000007C  52		     1	    push                EDX
+ 0000007D  BA 00000110 R     1	    mov                 EDX, OFFSET GUI_gameboard_SPACE
+ 00000082  E8 00000000 E     1	    call                WriteString
+ 00000087  5A		     1	    pop                 EDX
+				mPrint      GUI_gameboard_Z
+ 00000088  52		     1	    push                EDX
+ 00000089  BA 000001DC R     1	    mov                 EDX, OFFSET GUI_gameboard_Z
+ 0000008E  E8 00000000 E     1	    call                WriteString
+ 00000093  5A		     1	    pop                 EDX
+
+ 00000094  59			pop         ECX
+
+ 00000095  C3			ret
+ 00000096			DrawNewGameboard ENDP
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:41:17
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 Mastermind			(AddTwo.asm		     Symbols 2 - 1
 
 
@@ -265,7 +313,8 @@ Macros:
 
                 N a m e                 Type
 
-mSwap  . . . . . . . . . . . . .	Proc
+mArand . . . . . . . . . . . . .	Proc
+mPrint . . . . . . . . . . . . .	Proc
 
 
 Structures and Unions:
@@ -357,7 +406,7 @@ Segments and Groups:
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
 _DATA  . . . . . . . . . . . . .	32 Bit	 00000227 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 00000011 Para	  Public  'CODE'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000096 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
@@ -371,6 +420,8 @@ CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 CreateOutputFile . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Crlf . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Delay  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
+DrawNewGameboard . . . . . . . .	P Near	 0000000F _TEXT	Length= 00000087 Public STDCALL
+  _printPlayArea . . . . . . . .	L Near	 00000056 _TEXT	
 DumpMem  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 DumpRegs . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -397,7 +448,6 @@ GetStdHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 GetSystemTime  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetTextColor . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetTickCount . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-GetUserTemps . . . . . . . . . .	P Near	 0000000A _TEXT	Length= 00000007 Public STDCALL
 Gotoxy . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapAlloc  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -465,7 +515,7 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000000A Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 0000000F Public STDCALL
   setup  . . . . . . . . . . . .	L Near	 00000000 _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
 scanf  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
