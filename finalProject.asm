@@ -174,6 +174,8 @@ push        TYPE solution
 push        OFFSET solution
 call        GenerateCode
 
+call        ListenUser
+call        CheckSimilar
 exit; exit to operating system
 main ENDP
 
@@ -276,5 +278,89 @@ pop         EBP
 
 ret         12
 GenerateCode ENDP
+
+; -------------------------------------------------------- -
+ArrayAt PROC
+; Author:           Trenton Young
+; Description:      Gets the nth element from an array and stores
+;                   it in EAX
+;
+; Parameters:       push n
+;                   push OFFSET array
+;                   push TYPE array
+;                   call
+;
+; Postconditions:   EAX will contain the value of array[n]
+; -------------------------------------------------------- -
+push                EBP
+mov                 EBP, ESP
+
+push                EBX
+push                ECX
+push                EDX
+
+_stackFrame:
+    mov             EAX, [EBP + 16]         ; n
+    mov             EBX, [EBP + 12]         ; OFFSET array
+    mov             ECX, [EBP + 8]          ; TYPE array
+
+mul                 ECX                     ; Multiply n by the type of the array
+add                 EBX, ECX                ; Get to array[n]
+mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
+
+pop                 EDX
+pop                 ECX
+pop                 EBX
+
+pop                 EBP
+
+ret 12
+ArrayAt ENDP
+
+
+; -------------------------------------------------------- -
+ListenUser PROC
+; Author:           Hla Htun
+; Description:      Takes in 4 user input and stores it in the array
+;
+; Parameters:
+;                   push OFFSET userArray
+;                   push TYPE userArray
+;                   call
+; Preconditions:    An array as a parameter to store the 4 user inputs
+; Postconditions:   None. The array passed will be updated with the user input
+; -------------------------------------------------------- -
+    ; call readDec
+    ; store to array
+
+    ; loop until 4
+
+    ret
+ListenUser ENDP
+
+; -------------------------------------------------------- -
+CheckSimilar PROC
+; Author:           Hla Htun
+; Description:      Takes in two arrays. Counts the number of
+;                   indices with identical values between arrays (i.e. hits)
+;                   Next, counts the number of values shared between arrays
+;                   subtracts hits from blows and returns each value
+;
+; Parameters:
+;                   push OFFSET solArray
+;                   push TYPE solArray
+;                   push OFFSET userArray
+;                   push TYPE userArray
+;                   call
+; Postconditions:   Returns the number of hits and blows, i.e. ret hits, blows
+; -------------------------------------------------------- -
+    push    EBP
+    push    EBP, ESP
+
+
+
+    pop     EBP
+    ret
+CheckSimilar ENDP
 
 END main
