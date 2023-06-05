@@ -11,6 +11,10 @@ INCLUDE Irvine32.inc
 TRUE = 1
 FALSE = 0
 
+HIT = 2
+BLOW = 1
+MISS = 0
+
 CR = 13
 LF = 10
 
@@ -104,11 +108,46 @@ mGotoXY         MACRO _x, _y
 ; Use:          Pass an X and Y value (0-indexed) to move
 ;               the cursor
 ; --------------------------------------------------------
+    push        EDX 
+
     mov         dl, _x
     dec         dl
     mov         dh, _y
     dec         dh
     call        Gotoxy
+
+    pop         EDX
+ENDM
+
+; --------------------------------------------------------
+mPlacePeg       MACRO _x, _y, _color
+; Author:       Trenton Young
+; Description:  Draws a peg of the specified color at the
+;               specified location
+;
+; Use:          Pass an X and Y value (0-indexed) and a color
+;               code from the predefined palettes
+; --------------------------------------------------------
+    mGotoXY     _x, _y
+
+    push        _color
+    call        SetColorFromPalette
+
+    mPrint      GUI_gameboard_pegs
+ENDM
+
+; --------------------------------------------------------
+mPlaceFeedback  MACRO _x, _y, _feedback
+; Author:       Trenton Young
+; Description:  Simple wrapper for placing feedback pegs
+;
+; Use:          Pass an X and Y value (0-indexed) and a
+;               value for the feedback (see PlaceFeedback PROC)
+; --------------------------------------------------------
+    push        _x
+    push        _y
+    push        _feedback
+    call        PlaceFeedback
 ENDM
 
 .data
@@ -128,10 +167,12 @@ GUI_gameboard_pegs          BYTE        "-@", 0         ; ASCII for a game peg
 
 GUI_feedback_hit            BYTE        "o", 0
 GUI_feedback_blow           BYTE        "*", 0
-GUI_feedback_none           BYTE        ".", 0
+GUI_feedback_miss           BYTE        ".", 0
 
-MAP_background_color        DWORD       red,            gray,           green,          blue,           yellow,         cyan,           magenta,        brown
-MAP_text_color              DWORD       white,          white,          black,          white,          black,          black,          black,          white
+;                                       ~ pegs color palette                                                                     ~      ~ feedback color palette  ~
+MAP_background_color        DWORD       red,        gray,       green,      blue,       yellow,     cyan,       magenta,    brown,      white,      white,      white
+MAP_text_color              DWORD       white,      white,      black,      white,      black,      black,      black,      white,      black,      gray,       red
+;                                       0           1           2           3           4           5           6           7           8 [miss]    9 [blow]    10 [hit]
 
 ; (Localizations)           Define any messages to be displayed here
 
@@ -144,6 +185,7 @@ current_round               BYTE        0
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
+
 .code
 main PROC; (insert executable instructions here)
 
@@ -154,7 +196,10 @@ setup:
 ; Runs functions that set the environment to expected
 ; --------------------------------------------------------
 finit
-call        Randomize
+call            Randomize
+
+push            8
+call            SetColorFromPalette
 
 ; --------------------------------------------------------
 gameplay:
@@ -162,19 +207,30 @@ gameplay:
 ; Runs the gameloop TODO contains test code right now
 ; --------------------------------------------------------
 
-call        DrawNewGameboard
+call            DrawNewGameboard
 
-mGotoXY     7, 7
-mPrint      GUI_gameboard_pegs
+mPlacePeg       7, 7, 2
+mPlacePeg       7, 9, 5
+mPlacePeg       7, 11, 1
+mPlacePeg       7, 13, 4
 
-mGotoXY     1, 20
+mPlaceFeedback  7, 4, HIT
+mPlaceFeedback  8, 4, BLOW
+mPlaceFeedback  7, 5, BLOW
 
-push        FALSE
-push        TYPE solution
-push        OFFSET solution
-call        GenerateCode
 
-exit; exit to operating system
+push            FALSE
+push            TYPE solution
+push            OFFSET solution
+call            GenerateCode
+
+
+; End of program steps
+mGotoXY         1, 20
+
+push            8
+call            SetColorFromPalette
+exit                                    ; exit to operating system
 main ENDP
 
 ; (insert additional procedures here)
@@ -276,5 +332,179 @@ pop         EBP
 
 ret         12
 GenerateCode ENDP
+
+
+; -------------------------------------------------------- -
+ArrayAt PROC
+; Author:           Trenton Young
+; Description:      Gets the nth element from an array and stores
+;                   it in EAX
+;
+; Parameters:       push n
+;                   push OFFSET array
+;                   push TYPE array
+;                   call
+;
+; Postconditions:   EAX will contain the value of array[n]
+; -------------------------------------------------------- -
+push                EBP
+mov                 EBP, ESP
+
+push                EBX
+push                ECX
+push                EDX
+
+_stackFrame:
+    mov             EAX, [EBP + 16]         ; n
+    mov             EBX, [EBP + 12]         ; OFFSET array
+    mov             ECX, [EBP + 8]          ; TYPE array
+
+mul                 ECX                     ; Multiply n by the type of the array
+add                 EBX, EAX                ; Get to array[n]
+mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
+
+pop                 EDX
+pop                 ECX
+pop                 EBX
+
+pop                 EBP
+
+ret 12
+ArrayAt ENDP
+
+; -------------------------------------------------------- -
+SetColorFromPalette PROC
+; Author:           Trenton Young
+; Description:      Sets the text color to predefined palette
+;
+; Parameters:       push n
+;                   call
+;
+; Preconditions:    Parallel arrays for text and background colors
+; Postconditions:   Text color is changed
+; -------------------------------------------------------- -
+push                EBP
+mov                 EBP, ESP
+
+push                EAX
+push                EBX
+push                ECX
+
+_stackFrame:
+    mov             ECX, [EBP + 8]          ; n
+
+; Get the nth element of the background colormap
+push                ECX
+push                OFFSET MAP_background_color
+push                TYPE MAP_background_color
+call                ArrayAt
+
+; Multiply by 16 to shift to background position
+mov                 EBX, 16
+mul                 EBX
+
+; Preserve background in EBX
+mov                 EBX, EAX
+
+; Get the nth element of the foreground colormap
+push                ECX
+push                OFFSET MAP_text_color
+push                TYPE MAP_text_color
+call                ArrayAt
+
+; Add the background mask back on to EAX
+add                 EAX, EBX
+
+; Finally, set the color
+call                SetTextColor
+
+pop                 ECX
+pop                 EBX
+pop                 EAX
+
+pop                 EBP
+
+ret 4
+SetColorFromPalette ENDP
+
+; --------------------------------------------------------
+PlaceFeedback PROC
+; Author:       Trenton Young
+; Description:  Draws a feedback peg at the specified location.
+;               Pass an X and Y value (0-indexed) and a number
+;               coinciding with the level of feedback
+;               - 0: miss
+;               - 1: blow
+;               - 2: hit
+;
+; Parameters:   PUSH x
+;               PUSH y
+;               PUSH feedback
+;               call
+;
+; --------------------------------------------------------
+push            EBP
+mov             EBP, ESP
+
+push            EAX
+push            EBX
+push            ECX
+push            EDX
+
+_stackFrame:
+    mov         ECX, [EBP + 16]         ; x
+    mov         EBX, [EBP + 12]         ; y
+    mov         EAX, [EBP + 8]          ; feedback
+
+_moveCursor:
+    push        EAX
+
+    mov         EAX, EBX                ; insert y
+    dec         EAX                     ; shift back for 1-indexing
+    mov         EBX, 256
+    mul         EBX                     ; shift y to subregister AH
+
+    add         EAX, ECX                ; insert x to subregister AL
+    dec         EAX                     ; shift back for 1-indexing
+
+    mov         EDX, EAX                ; move y to DH, x to DL
+
+    call        GotoXY
+    pop         EAX
+
+cmp             EAX, HIT
+je              _hit
+
+cmp             EAX, BLOW
+je              _blow
+
+_miss:
+    push        8
+    call        SetColorFromPalette
+    mPrint      GUI_feedback_miss
+    jmp         _done
+_blow:
+    push        9
+    call        SetColorFromPalette
+    mPrint      GUI_feedback_blow
+    jmp         _done
+_hit:
+    push        10
+    call        SetColorFromPalette
+    mPrint      GUI_feedback_hit
+    jmp         _done
+
+_done:
+
+pop             EDX
+pop             ECX
+pop             EBX
+pop             EAX
+
+pop             EBP
+
+ret 12
+PlaceFeedback ENDP
+
 
 END main
