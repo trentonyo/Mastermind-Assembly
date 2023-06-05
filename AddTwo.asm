@@ -167,21 +167,32 @@ call        DrawNewGameboard
 
 mGotoXY     7, 7
 
+
 ; Get the nth element of the background colormap
-push        1
+push        4
 push        OFFSET MAP_background_color
 push        TYPE MAP_background_color
 call        ArrayAt
 
-mov         EAX, EBP
-mov         EAX, red
+; Multiply by 16 to shift to background position
 mov         EBX, 16
 mul         EBX
-mov         EBX, MAP_text_color[1]
-;mov         EBX, white
+
+; Preserve background in EBX
+mov         EBX, EAX
+
+; Get the nth element of the foreground colormap
+push        4
+push        OFFSET MAP_text_color
+push        TYPE MAP_text_color
+call        ArrayAt
+
+; Add the background mask back on to EAX
 add         EAX, EBX
 
+; Finally, set the color
 call        SetTextColor
+
 
 mPrint      GUI_gameboard_pegs
 
@@ -322,7 +333,7 @@ _stackFrame:
     mov             ECX, [EBP + 8]          ; TYPE array
 
 mul                 ECX                     ; Multiply n by the type of the array
-add                 EBX, ECX                ; Get to array[n]
+add                 EBX, EAX                ; Get to array[n]
 mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
 
 pop                 EDX
