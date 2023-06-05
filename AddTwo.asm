@@ -133,6 +133,13 @@ setup:
 ; Runs functions that set the environment to expected
 ; --------------------------------------------------------
 finit
+call        Randomize
+
+; --------------------------------------------------------
+gameplay:
+;
+; Runs the gameloop TODO contains test code right now
+; --------------------------------------------------------
 
 call        DrawNewGameboard
 
@@ -203,11 +210,23 @@ push        EBX
 push        ECX
 push        EDX
 
-_generateCode:
+_stackFrame:
     mov     ECX, CODE_LENGTH
     mov     EDX, [EBP + 16]         ; [OPTIONAL] if TRUE, will allow duplicates in code
     mov     EBX, [EBP + 12]         ; TYPE of target array
     mov     EAX, [EBP + 8]          ; OFFSET of target array
+
+_generateCode:
+    push    EDX
+
+    mArand  1, COLORS, EDX          ; Get a random number and store to EDX
+    mov     [EAX], EDX              ; Store in next index TODO check for duplicates
+
+    pop     EDX
+
+    add     EAX, EDX                ; Increment index
+
+    loop    _generateCode
 
 pop         EDX
 pop         ECX
