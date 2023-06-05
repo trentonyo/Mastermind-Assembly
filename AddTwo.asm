@@ -8,6 +8,9 @@ TITLE Mastermind			(AddTwo.asm)
 INCLUDE Irvine32.inc
 
 ; (insert constant definitions here)
+TRUE = 1
+FALSE = 0
+
 CR = 13
 LF = 10
 
@@ -29,12 +32,12 @@ mPrint          MACRO str
 ;
 ; Use:          Pass a string, not the OFFSET
 ; --------------------------------------------------------
-    push                EDX
+    push        EDX
 
-    mov                 EDX, OFFSET str
-    call                WriteString
+    mov         EDX, OFFSET str
+    call        WriteString
 
-    pop                 EDX
+    pop         EDX
 ENDM
 
 ; --------------------------------------------------------
@@ -46,17 +49,17 @@ mArand          MACRO _low, _high, _target
 ; Use:          _low and _high may be literals, _target may
 ;               be a register
 ; --------------------------------------------------------
-    push    EAX
+    push        EAX
 
-    mov     EAX, _high
-    sub     EAX, _low
-    inc     EAX
-    call    RandomRange
-    add     EAX, _low
+    mov         EAX, _high
+    sub         EAX, _low
+    inc         EAX
+    call        RandomRange
+    add         EAX, _low
 
-    mov     _target, EAX
+    mov         _target, EAX
 
-    pop     EAX
+    pop         EAX
 ENDM
 
 ; --------------------------------------------------------
@@ -68,33 +71,33 @@ mArrayFlatten   MACRO _ROW, _COL, _baseAddress, _size, _rowSize, _target
 ; Use:          Address is stored in _target which may be
 ;               a register
 ; --------------------------------------------------------
-    push    EAX
-    push    EBX
-    push    EDX
+    push        EAX
+    push        EBX
+    push        EDX
 
-    mov     EAX, _ROW
-    mov     EBX, _rowSize
-    mul     EBX
+    mov         EAX, _ROW
+    mov         EBX, _rowSize
+    mul         EBX
 
-    mov     EBX, _COL
-    add     EAX, EBX
+    mov         EBX, _COL
+    add         EAX, EBX
 
-    mov     EBX, _size
-    mul     EBX
+    mov         EBX, _size
+    mul         EBX
 
-    mov     EBX, _baseAddress
-    add     EAX, EBX
+    mov         EBX, _baseAddress
+    add         EAX, EBX
 
-    mov     _target, EAX
+    mov         _target, EAX
 
-    pop     EDX
-    pop     EBX
-    pop     EAX
+    pop         EDX
+    pop         EBX
+    pop         EAX
 ENDM
 
 .data
 
-; (Graphics)        Define any ASCII art strings here
+; (Graphics)                Define any ASCII art strings here
 
 GUI_gameboard_A             BYTE        "     |>-~-~-~-~-~-~-~-~-~-~-<|                                   ", CR, LF, 0
 GUI_gameboard_B             BYTE        "#####|  M A S T E R M I N D  |###################################", CR, LF, 0
@@ -111,10 +114,11 @@ GUI_feedback_hit            BYTE        "o", 0
 GUI_feedback_blow           BYTE        "*", 0
 GUI_feedback_none           BYTE        ".", 0
 
-; (Localizations)
-;ec1				BYTE		"**EC         : Performs four different conversions.", CR, LF, 0
+; (Localizations)           Define any messages to be displayed here
 
-; (Gamestate)
+greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
+
+; (Gamestate)               Variables defining gameplay
 
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
@@ -131,6 +135,11 @@ setup:
 finit
 
 call        DrawNewGameboard
+
+push        FALSE
+push        TYPE solution
+push        OFFSET solution
+call        GenerateCode
 
 exit; exit to operating system
 main ENDP
@@ -171,5 +180,41 @@ pop         ECX
 ret
 DrawNewGameboard ENDP
 
+; -------------------------------------------------------- -
+GenerateCode PROC
+; Author:           Trenton Young
+; Description:      Generates a code of the length defined by the
+;                   const CODE_LENGTH, if TRUE is passed as a
+;                   parameter, will allow duplicates
+;
+; Parameters:       push TRUE/FALSE * optional
+;                   push TYPE target
+;                   push OFFSET target
+;                   call
+;
+; Preconditions:    Define global const CODE_LENGTH
+; Postconditions:   Target will contain the new code
+; -------------------------------------------------------- -
+push        EBP
+mov         EBP, ESP    ; register-indirect initialization
+
+push        EAX
+push        EBX
+push        ECX
+push        EDX
+
+_generateCode:
+    mov     ECX, CODE_LENGTH
+    mov     EDX, [EBP + 16]         ; [OPTIONAL] if TRUE, will allow duplicates in code
+    mov     EBX, [EBP + 12]         ; TYPE of target array
+    mov     EAX, [EBP + 8]          ; OFFSET of target array
+
+pop         EDX
+pop         ECX
+pop         EBX
+pop         EAX
+pop         EBP
+ret
+GenerateCode ENDP
 
 END main
