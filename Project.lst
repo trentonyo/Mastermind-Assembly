@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:05:42
 Mastermind			(AddTwo.asm		     Page 1 - 1
 
 
@@ -44,7 +44,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 
 
 				; --------------------------------------------------------
-				mPrint              MACRO str
+				mPrint          MACRO str
 				; Author:       Trenton Young
 				; Description:  Basic wrapper for Irvine's WriteString
 				;
@@ -59,7 +59,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 				ENDM
 
 				; --------------------------------------------------------
-				mArand              MACRO _low, _high, _target
+				mArand          MACRO _low, _high, _target
 				; Author:       Trenton Young
 				; Description:  Random range from Irvine's WriteString,
 				;               output is stored in given register
@@ -77,6 +77,39 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 
 				    mov     _target, EAX
 
+				    pop     EAX
+				ENDM
+
+				; --------------------------------------------------------
+				mArrayFlatten   MACRO _ROW, _COL, _baseAddress, _size, _rowSize, _target
+				; Author:       Trenton Young
+				; Description:  calculates address of index in 2D array given
+				;               row and column
+				;
+				; Use:          Address is stored in _target which may be
+				;               a register
+				; --------------------------------------------------------
+				    push    EAX
+				    push    EBX
+				    push    EDX
+
+				    mov     EAX, _ROW
+				    mov     EBX, _rowSize
+				    mul     EBX
+
+				    mov     EBX, _COL
+				    add     EAX, EBX
+
+				    mov     EBX, _size
+				    mul     EBX
+
+				    mov     EBX, _baseAddress
+				    add     EAX, EBX
+
+				    mov     _target, EAX
+
+				    pop     EDX
+				    pop     EBX
 				    pop     EAX
 				ENDM
 
@@ -206,6 +239,16 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 				; (Localizations)
 				;ec1				BYTE		"**EC         : Performs four different conversions.", CR, LF, 0
 
+				; (Gamestate)
+
+ 00000227  00000004 [		solution                    BYTE        CODE_LENGTH DUP(?)
+	    00
+	   ]
+ 0000022B  00000004 [		game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
+	    00000008 [
+	     00
+	    ]
+	   ]
 
  00000000			.code
  00000000			main PROC; (insert executable instructions here)
@@ -303,7 +346,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
 
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 17:54:04
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/04/23 18:05:42
 Mastermind			(AddTwo.asm		     Symbols 2 - 1
 
 
@@ -314,6 +357,7 @@ Macros:
                 N a m e                 Type
 
 mArand . . . . . . . . . . . . .	Proc
+mArrayFlatten  . . . . . . . . .	Proc
 mPrint . . . . . . . . . . . . .	Proc
 
 
@@ -405,7 +449,7 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000227 Para	  Public  'DATA'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000024B Para	  Public  'DATA'	
 _TEXT  . . . . . . . . . . . . .	32 Bit	 00000096 Para	  Public  'CODE'	
 
 
@@ -760,6 +804,7 @@ blue . . . . . . . . . . . . . .	Number	 00000001h
 brown  . . . . . . . . . . . . .	Number	 00000006h   
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
+game_matrix  . . . . . . . . . .	Byte	 0000022B _DATA	
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
@@ -770,6 +815,7 @@ lightMagenta . . . . . . . . . .	Number	 0000000Dh
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
 red  . . . . . . . . . . . . . .	Number	 00000004h   
+solution . . . . . . . . . . . .	Byte	 00000227 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   

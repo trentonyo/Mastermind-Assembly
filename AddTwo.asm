@@ -23,7 +23,7 @@ COLORS = 8                          ; Number of colored pegs the game uses
 
 
 ; --------------------------------------------------------
-mPrint              MACRO str
+mPrint          MACRO str
 ; Author:       Trenton Young
 ; Description:  Basic wrapper for Irvine's WriteString
 ;
@@ -38,7 +38,7 @@ mPrint              MACRO str
 ENDM
 
 ; --------------------------------------------------------
-mArand              MACRO _low, _high, _target
+mArand          MACRO _low, _high, _target
 ; Author:       Trenton Young
 ; Description:  Random range from Irvine's WriteString,
 ;               output is stored in given register
@@ -56,6 +56,39 @@ mArand              MACRO _low, _high, _target
 
     mov     _target, EAX
 
+    pop     EAX
+ENDM
+
+; --------------------------------------------------------
+mArrayFlatten   MACRO _ROW, _COL, _baseAddress, _size, _rowSize, _target
+; Author:       Trenton Young
+; Description:  calculates address of index in 2D array given
+;               row and column
+;
+; Use:          Address is stored in _target which may be
+;               a register
+; --------------------------------------------------------
+    push    EAX
+    push    EBX
+    push    EDX
+
+    mov     EAX, _ROW
+    mov     EBX, _rowSize
+    mul     EBX
+
+    mov     EBX, _COL
+    add     EAX, EBX
+
+    mov     EBX, _size
+    mul     EBX
+
+    mov     EBX, _baseAddress
+    add     EAX, EBX
+
+    mov     _target, EAX
+
+    pop     EDX
+    pop     EBX
     pop     EAX
 ENDM
 
@@ -81,6 +114,10 @@ GUI_feedback_none           BYTE        ".", 0
 ; (Localizations)
 ;ec1				BYTE		"**EC         : Performs four different conversions.", CR, LF, 0
 
+; (Gamestate)
+
+solution                    BYTE        CODE_LENGTH DUP(?)
+game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
 .code
 main PROC; (insert executable instructions here)
