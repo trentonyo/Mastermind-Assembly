@@ -111,6 +111,23 @@ mGotoXY         MACRO _x, _y
     call        Gotoxy
 ENDM
 
+; --------------------------------------------------------
+mPlacePeg       MACRO _x, _y, _color
+; Author:       Trenton Young
+; Description:  Draws a peg of the specified color at the
+;               specified location
+;
+; Use:          Pass an X and Y value (0-indexed) and a color
+;               code from the predefined palettes
+; --------------------------------------------------------
+   mGotoXY     _x, _y
+
+    push        _color
+    call        SetColorFromPalette
+
+    mPrint      GUI_gameboard_pegs
+ENDM
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -165,12 +182,10 @@ gameplay:
 
 call        DrawNewGameboard
 
-mGotoXY     7, 7
-
-push        2
-call        SetColorFromPalette
-
-mPrint      GUI_gameboard_pegs
+mPlacePeg   7, 7, 2
+mPlacePeg   7, 9, 5
+mPlacePeg   7, 11, 1
+mPlacePeg   7, 13, 4
 
 mGotoXY     1, 20
 
