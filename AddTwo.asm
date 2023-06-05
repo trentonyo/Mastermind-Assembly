@@ -144,6 +144,7 @@ current_round               BYTE        0
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
+
 .code
 main PROC; (insert executable instructions here)
 
@@ -165,6 +166,23 @@ gameplay:
 call        DrawNewGameboard
 
 mGotoXY     7, 7
+
+; Get the nth element of the background colormap
+push        1
+push        OFFSET MAP_background_color
+push        TYPE MAP_background_color
+call        ArrayAt
+
+mov         EAX, EBP
+mov         EAX, red
+mov         EBX, 16
+mul         EBX
+mov         EBX, MAP_text_color[1]
+;mov         EBX, white
+add         EAX, EBX
+
+call        SetTextColor
+
 mPrint      GUI_gameboard_pegs
 
 mGotoXY     1, 20
@@ -276,5 +294,44 @@ pop         EBP
 
 ret         12
 GenerateCode ENDP
+
+
+; -------------------------------------------------------- -
+ArrayAt PROC
+; Author:           Trenton Young
+; Description:      Gets the nth element from an array and stores
+;                   it in EAX
+;
+; Parameters:       push n
+;                   push OFFSET array
+;                   push TYPE array
+;                   call
+;
+; Postconditions:   EAX will contain the value of array[n]
+; -------------------------------------------------------- -
+push                EBP
+mov                 EBP, ESP
+
+push                EBX
+push                ECX
+push                EDX
+
+_stackFrame:
+    mov             EAX, [EBP + 16]         ; n
+    mov             EBX, [EBP + 12]         ; OFFSET array
+    mov             ECX, [EBP + 8]          ; TYPE array
+
+mul                 ECX                     ; Multiply n by the type of the array
+add                 EBX, ECX                ; Get to array[n]
+mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
+
+pop                 EDX
+pop                 ECX
+pop                 EBX
+
+pop                 EBP
+
+ret 12
+ArrayAt ENDP
 
 END main
