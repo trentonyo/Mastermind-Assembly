@@ -305,7 +305,7 @@ _stackFrame:
     mov             ECX, [EBP + 8]          ; TYPE array
 
 mul                 ECX                     ; Multiply n by the type of the array
-add                 EBX, ECX                ; Get to array[n]
+add                 EBX, EAX                ; Get to array[n]
 mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
 
 pop                 EDX
