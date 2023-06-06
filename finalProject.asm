@@ -1,4 +1,4 @@
-TITLE Mastermind			(AddTwo.asm)
+ TITLE Mastermind			(AddTwo.asm)
 
 ; Author(s) : Trenton Young
 ; Course / Project ID  CS 271 / Final Project
@@ -152,14 +152,14 @@ ENDM
 
 ; (Graphics)                Define any ASCII art strings here
 
-GUI_gameboard_A             BYTE        "     |>-~-~-~-~-~-~-~-~-~-~-<|                                   ", CR, LF, 0
-GUI_gameboard_B             BYTE        "#####|  M A S T E R M I N D  |###################################", CR, LF, 0
-GUI_gameboard_C             BYTE        "#    |_______________________|                       #          #", CR, LF, 0
-GUI_gameboard_DE            BYTE        "#     ..      ..      ..      ..      ..      ..     #          #", CR, LF, 0
-GUI_gameboard_SPACE         BYTE        "#                                                    #          #", CR, LF, 0  ; Line will be repeated
-GUI_gameboard_PEG           BYTE        "#    [  ]    [  ]    [  ]    [  ]    [  ]    [  ]    #   [XX]   #", CR, LF, 0  ; Line will be repeated
-GUI_gameboard_ACCENT        BYTE        "#    ----    ----    ----    ----    ----    ----    #          #", CR, LF, 0
-GUI_gameboard_Z             BYTE        "#################################################################", 0
+GUI_gameboard_A             BYTE        "     |>-~-~-~-~-~-~-~-~-~-~-<|                                                   ", CR, LF, 0
+GUI_gameboard_B             BYTE        "#####|  M A S T E R M I N D  |###################################################", CR, LF, 0
+GUI_gameboard_C             BYTE        "#    |_______________________|                                       #          #", CR, LF, 0
+GUI_gameboard_DE            BYTE        "#     ..      ..      ..      ..      ..      ..      ..      ..     #          #", CR, LF, 0
+GUI_gameboard_SPACE         BYTE        "#                                                                    #          #", CR, LF, 0  ; Line will be repeated
+GUI_gameboard_PEG           BYTE        "#    [  ]    [  ]    [  ]    [  ]    [  ]    [  ]    [  ]    [  ]    #   [XX]   #", CR, LF, 0  ; Line will be repeated
+GUI_gameboard_ACCENT        BYTE        "#    ----    ----    ----    ----    ----    ----    ----    ----    #          #", CR, LF, 0
+GUI_gameboard_Z             BYTE        "#################################################################################", 0
 
 GUI_gameboard_pegs          BYTE        "-@", 0         ; ASCII for a game peg
 
