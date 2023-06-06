@@ -144,6 +144,7 @@ current_round               BYTE        0
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
+userArray                   DWORD       4 DUP(?)
 .code
 main PROC; (insert executable instructions here)
 
@@ -174,6 +175,7 @@ push        TYPE solution
 push        OFFSET solution
 call        GenerateCode
 
+push        OFFSET userArray
 call        ListenUser
 call        CheckSimilar
 exit; exit to operating system
@@ -334,7 +336,23 @@ ListenUser PROC
     ; store to array
 
     ; loop until 4
+    push EBP
+    mov EBP, ESP
+    pushad
 
+
+    mov EDI, [EBP+8]
+    mov ECX, 4
+    askUser:
+        call ReadInt
+        mov [EDI], EAX
+        cmp ECX, 0
+        JE outOfAskUser
+        sub ECX, 1
+        JMP askUser
+
+    popad
+    pop EBP
     ret
 ListenUser ENDP
 
@@ -354,12 +372,12 @@ CheckSimilar PROC
 ;                   call
 ; Postconditions:   Returns the number of hits and blows, i.e. ret hits, blows
 ; -------------------------------------------------------- -
-    push    EBP
-    push    EBP, ESP
+    ;push    EBP
+    ;push    EBP, ESP
 
 
 
-    pop     EBP
+    ;pop     EBP
     ret
 CheckSimilar ENDP
 
