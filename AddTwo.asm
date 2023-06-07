@@ -182,7 +182,7 @@ greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 
 current_round               BYTE        0
 
-solution                    BYTE        CODE_LENGTH DUP(?)
+solution    BYTE    2,5,1,4
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
 
@@ -218,11 +218,14 @@ mPlaceFeedback  7, 4, HIT
 mPlaceFeedback  8, 4, BLOW
 mPlaceFeedback  7, 5, BLOW
 
+call            PrintSolution
 
 push            FALSE
 push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
+
+
 
 
 ; End of program steps
@@ -506,5 +509,41 @@ pop             EBP
 ret 12
 PlaceFeedback ENDP
 
+; -------------------------------------------------------- -
+PrintSolution PROC
+; Author:           Cameron Kroeker
+; Description:      Prints the solution pegs into the [xx] spot on the table
+;
+; Parameters:       
+;
+; Preconditions: Must have solution Array filled with at least 4 bytes. Gameboard must be printed before PROC is called.
+; Postconditions:  Color is set to white, EAX is set to 0. 
+; -------------------------------------------------------- -
+
+mov EDI, 0              ; Set EDI to 0
+
+    ; Print the value stored in list[0]
+   
+movzx EAX, solution[EDI]
+mPlacePeg       59, 7, EAX
+
+movzx EAX, solution[EDI+1]
+mPlacePeg       59, 9, EAX
+
+movzx EAX, solution[EDI+2]
+mPlacePeg       59, 11, EAX
+
+movzx EAX, solution[EDI+3]
+mPlacePeg       59, 13, EAX
+
+
+;Set color back to White
+push            8
+call            SetColorFromPalette
+
+
+mov EAX, 0
+ret
+PrintSolution ENDP
 
 END main
