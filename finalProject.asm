@@ -224,16 +224,16 @@ selectColor    				BYTE		"Select a color for a peg using the arrow keys, and pre
 
 current_round               BYTE        0
 
-solution                    BYTE        CODE_LENGTH DUP(?) ; TODO What's this?
+solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
-user_guess                  BYTE        CODE_LENGTH DUP(? )
+user_guess                  BYTE        CODE_LENGTH DUP(?)                     ; TODO consolidate arrays from test phase - Trenton Young
 
 ; Hits and Blows            hits and blows will be stored in these variables
-hits                        DWORD       ?
-blows                       DWORD       ?
-uArray                      DWORD       3, 3, 1, 3       ; user guesses
-solArray                    DWORD       3, 3, 3, 3       ; peg positions?
+hits                        DWORD       0
+blows                       DWORD       0
+uArray                      DWORD       CODE_LENGTH DUP(-1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
+solArray                    DWORD       CODE_LENGTH DUP(-1)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
 helperVar1                  DWORD       ?
 matches                     DWORD       ?
 
@@ -245,8 +245,8 @@ msgHh4                      BYTE        LF, "hits: ", 0
 msgHh5                      BYTE        LF, "blows: ", 0
 msgSpace                    BYTE        " ", 0
 
-userArray                   DWORD       4 DUP(?)
-currX                       DWORD       1               ; Helper var for GetUserCode. Will store current x coordinate.
+userArray                   DWORD       4 DUP(?)                                ; TODO consolidate arrays from test phase - Trenton Young
+currX                       DWORD       1               ; Helper var for GetUserCode. Will store current x coordinate.  ; TODO can probably by calculated on the fly (from test phase) - Trenton Young
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 .code
 main PROC; (insert executable instructions here)
@@ -355,7 +355,7 @@ GenerateCode PROC
 ;                   call
 ;
 ; Preconditions:    Define global const CODE_LENGTH
-; Postconditions:   Target will contain the new code
+; Postconditions:   Target will contain the new code, TODO uArray and solArray will be mutated
 ; -------------------------------------------------------- -
 push        EBP
 mov         EBP, ESP    ; register-indirect initialization
@@ -364,6 +364,16 @@ push        EAX
 push        EBX
 push        ECX
 push        EDX
+
+mov         EAX, 0
+mov         ECX, CODE_LENGTH
+
+_clearCheckArrays:
+    mov     uArray[EAX], -1
+    mov     solArray[EAX], -1
+
+    inc     EAX
+    loop    _clearCheckArrays
 
 _stackFrame:
     mov     ECX, CODE_LENGTH
@@ -384,6 +394,13 @@ _generateCode:
     pop     ECX                     ; ECX is loop counter again
 
     ; TODO check code, can probably somehow use the code checking proc that needs to be written for gameplay
+
+    ; comparing uArray and solArray elements - updates hits and blows
+    push            OFFSET blows
+    push            OFFSET hits
+    call            CheckSimilar
+
+    ; TODO finish check code
 
     push    ECX                     ; _allowDuplicates expects a floating loop counter
     mov     ECX, EDX                ; and for the random number to be stored in ECX
