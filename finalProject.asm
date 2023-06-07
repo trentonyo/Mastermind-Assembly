@@ -108,6 +108,8 @@ mGotoXY         MACRO _x, _y
 ; Use:          Pass an X and Y value (0-indexed) to move
 ;               the cursor
 ; --------------------------------------------------------
+    push        EDX
+
     mov         dl, _x
     dec         dl
     mov         dh, _y
@@ -148,6 +150,47 @@ mPlaceFeedback  MACRO _x, _y, _feedback
     call        PlaceFeedback
 ENDM
 
+; --------------------------------------------------------
+mIsArrayElementEqual  MACRO _iArray, _isEqual
+; Author:       Hla Htun
+; Description:  Checks if an array has all equal values
+;
+; Use:          Pass an array and a value to hold 0 or 1 (true or false)
+;               for when an array has one same value in each index
+; --------------------------------------------------------
+    push 0
+    push OFFSET _iArray
+    push TYPE _iArray
+    call ArrayAt
+    mov EBX, EAX
+
+    mov ECX, 1
+    loopArraym:
+        push ECX
+        push OFFSET _iArray
+        push TYPE _iArray
+        call ArrayAt
+        cmp EBX, EAX
+        JNE isNotEqual
+        cmp ECX, 3
+        JE isEqual
+        add ECX, 1
+        mov EBX, EAX
+        JMP loopArraym
+
+    isEqual:
+        mov _isEqual, 1
+        JMP goBackNow
+
+    isNotEqual:
+        mov _isEqual, 0
+        JMP goBackNow
+
+
+    goBackNow:
+
+ENDM
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -183,7 +226,22 @@ current_round               BYTE        0
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
-userArray                   DWORD       4 DUP(?)
+; Hits and Blows            hits and blows will be stored in these variables
+hits                        DWORD       ?
+blows                       DWORD       ?
+uArray                      DWORD       3, 3, 1, 3       ; user guesses
+solArray                    DWORD       3, 3, 3, 3       ; peg positions?
+helperVar1                  DWORD       ?
+matches                     DWORD       ?
+
+; Hits and Blows temporary helper variables   - feel free to delete after
+msgHh1                      BYTE        "Comparing arrays", LF, 0
+msgHh2                      BYTE        "User array: ", 0
+msgHh3                      BYTE        LF, "Solution array: ", 0
+msgHh4                      BYTE        LF, "hits: ", 0
+msgHh5                      BYTE        LF, "blows: ", 0
+msgSpace                    BYTE        " ", 0
+
 .code
 main PROC; (insert executable instructions here)
 
@@ -222,16 +280,19 @@ push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
 
-push            OFFSET userArray
-call            ListenUser
-call            CheckSimilar
 
 ; End of program steps
 mGotoXY         1, 20
 
 push            8
 call            SetColorFromPalette
-exit                                    ; exit to operating system
+
+; comparing uArray and solArray elements - updates hits and blows
+push            OFFSET blows
+push            OFFSET hits
+call            CheckSimilar
+
+invoke EXITProcess, 0		; exit to operating system
 main ENDP
 
 ; (insert additional procedures here)
@@ -334,7 +395,6 @@ pop         EBP
 ret         12
 GenerateCode ENDP
 
-
 ; -------------------------------------------------------- -
 ArrayAt PROC
 ; Author:           Trenton Young
@@ -372,7 +432,6 @@ pop                 EBP
 
 ret 12
 ArrayAt ENDP
-
 
 ; -------------------------------------------------------- -
 SetColorFromPalette PROC
@@ -428,67 +487,6 @@ pop                 EBP
 
 ret 4
 SetColorFromPalette ENDP
-
-; -------------------------------------------------------- -
-ListenUser PROC
-; Author:           Hla Htun
-; Description:      Takes in 4 user input and stores it in the array
-;
-; Parameters:
-;                   push OFFSET userArray
-;                   push TYPE userArray
-;                   call
-; Preconditions:    An array as a parameter to store the 4 user inputs
-; Postconditions:   None. The array passed will be updated with the user input
-; -------------------------------------------------------- -
-    ; call readDec
-    ; store to array
-
-    ; loop until 4
-    push EBP
-    mov EBP, ESP
-    pushad
-
-
-    mov EDI, [EBP+8]
-    mov ECX, 4
-    askUser:
-        call ReadInt
-        mov [EDI], EAX
-        cmp ECX, 0
-        JE outOfAskUser
-        sub ECX, 1
-        JMP askUser
-
-    popad
-    pop EBP
-    ret
-ListenUser ENDP
-
-; -------------------------------------------------------- -
-CheckSimilar PROC
-; Author:           Hla Htun
-; Description:      Takes in two arrays. Counts the number of
-;                   indices with identical values between arrays (i.e. hits)
-;                   Next, counts the number of values shared between arrays
-;                   subtracts hits from blows and returns each value
-;
-; Parameters:
-;                   push OFFSET solArray
-;                   push TYPE solArray
-;                   push OFFSET userArray
-;                   push TYPE userArray
-;                   call
-; Postconditions:   Returns the number of hits and blows, i.e. ret hits, blows
-; -------------------------------------------------------- -
-    ;push    EBP
-    ;push    EBP, ESP
-
-
-
-    ;pop     EBP
-    ret
-CheckSimilar ENDP
 
 ; --------------------------------------------------------
 PlaceFeedback PROC
@@ -569,5 +567,90 @@ pop             EBP
 ret 12
 PlaceFeedback ENDP
 
+; -------------------------------------------------------- -
+CheckSimilar PROC
+; Author:           Hla Htun
+; Description:      Uses two arrays along with 'hits' and 'blows' variable.
+;                   Counts the number of indices with identical values between
+;                   arrays (i.e. hits)
+;                   Next, counts the number of values shared between arrays
+;                   subtracts hits from blows and returns each value
+;                   Finally updates the hits and blows variables
+;
+; Parameters:
+;                   push OFFSET blows       [12]
+;                   push OFFSEt hits        [8]
+;                   call
+;
+; Preconditions:    Must have uArray and solArray as global variables
+;                   Both of the arrays must have a size of 4
+;                   Additional global variables needed:
+;                   helperVar1, matches
+;
+; Postconditions:   Returns the number of hits and blows
+; -------------------------------------------------------- -
+    push    EBP
+    mov     EBP, ESP
+
+    mov     ECX, 0
+    PrintuArray:
+        push    ECX
+        push    OFFSET uArray
+        push    TYPE uArray
+        call    ArrayAt
+        mov     helperVar1, EAX
+
+        push    ECX
+        push    OFFSET solArray
+        push    TYPE solArray
+        call    ArrayAt
+        mov     EBX, helperVar1
+        cmp     EBX, EAX
+        JE      isAHit
+        JMP     notAHit
+        isAHit:
+            add hits, 1
+
+        notAHit:
+            ; ECX => i
+            ; EBX => j
+            mov     helperVar1, EAX
+            mov     EBX, hits
+            loop2ndArray:
+                push    EBX
+                push    OFFSET uArray
+                push    TYPE uArray
+                call    ArrayAt
+                cmp     EAX, helperVar1
+                JE      isAMatch
+                cmp     EBX, 3
+                JE      outOfisThisInArray
+                add     EBX, 1
+                JMP     loop2ndArray
+
+            isAMatch:
+                add     matches, 1
+                JMP     outOfisThisInArray
+
+
+        outOfisThisInArray:
+            cmp     ECX, 3
+            JE      outOfPrintuArray
+            add     ECX, 1
+            JMP     PrintuArray
+
+outOfPrintuArray:
+    mov     EBX, [EBP + 8]
+    mov     EAX, hits
+    mov     [EBX], EAX      ; saving to hits variable
+
+    mov     EAX, matches
+    sub     EAX, hits
+    mov     EBX, [EBP + 12]
+    mov     [EBX], EAX      ; saving to blows variable
+
+    pop     EBP
+    ret     8
+CheckSimilar ENDP
 
 END main
