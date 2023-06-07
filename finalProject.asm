@@ -623,6 +623,7 @@ outOfPrintsolArray:
     mPrint msgHh5
 
     mov EAX, matches
+    sub EAX, hits
     call WriteDec
 
     pop     EBP
