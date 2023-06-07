@@ -150,6 +150,47 @@ mPlaceFeedback  MACRO _x, _y, _feedback
     call        PlaceFeedback
 ENDM
 
+; --------------------------------------------------------
+mIsArrayElementEqual  MACRO _iArray, _isEqual
+; Author:       Hla Htun
+; Description:  Checks if an array has all equal values
+;
+; Use:          Pass an array and a value to hold 0 or 1 (true or false)
+;               for when an array has one same value in each index
+; --------------------------------------------------------
+    push 0
+    push OFFSET _iArray
+    push TYPE _iArray
+    call ArrayAt
+    mov EBX, EAX
+
+    mov ECX, 1
+    loopArraym:
+        push ECX
+        push OFFSET _iArray
+        push TYPE _iArray
+        call ArrayAt
+        cmp EBX, EAX
+        JNE isNotEqual
+        cmp ECX, 3
+        JE isEqual
+        add ECX, 1
+        mov EBX, EAX
+        JMP loopArraym
+
+    isEqual:
+        mov _isEqual, 1
+        JMP goBackNow
+
+    isNotEqual:
+        mov _isEqual, 0
+        JMP goBackNow
+
+
+    goBackNow:
+
+ENDM
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -188,8 +229,8 @@ game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       ?
 blows                       DWORD       ?
-uArray                      DWORD       3, 3, 3, 3       ; user guesses
-solArray                    DWORD       3, 3, 1, 3       ; peg positions?
+uArray                      DWORD       3, 3, 1, 3       ; user guesses
+solArray                    DWORD       3, 3, 3, 3       ; peg positions?
 helperVar1                  DWORD       ?
 matches                     DWORD       ?
 
@@ -530,7 +571,7 @@ PlaceFeedback ENDP
 ; -------------------------------------------------------- -
 CheckSimilar PROC
 ; Author:           Hla Htun
-; Description:      Takes in two arrays along with 'hits' and 'blows' variable.
+; Description:      Uses two arrays along with 'hits' and 'blows' variable.
 ;                   Counts the number of indices with identical values between
 ;                   arrays (i.e. hits)
 ;                   Next, counts the number of values shared between arrays
@@ -538,11 +579,13 @@ CheckSimilar PROC
 ;                   Finally updates the hits and blows variables
 ;
 ; Parameters:
-;                   push OFFSET solArray        [20]
-;                   push OFFSET uArray          [16]
 ;                   push blows                  [12]
 ;                   push hits                   [8]
 ;                   call
+;
+; Preconditions:    Must have uArray and solArray as global variables
+;                   Both of the arrays must have a size of 4
+;
 ; Postconditions:   Returns the number of hits and blows
 ; -------------------------------------------------------- -
     push    EBP
