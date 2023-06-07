@@ -184,7 +184,7 @@ invalidInput    			BYTE		"Invalid input.", CR, LF, 0
 
 current_round               BYTE        0
 
-solution                    BYTE        CODE_LENGTH DUP(?)
+solution    BYTE    2,5,1,4
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
 user_guess                  BYTE        CODE_LENGTH DUP(? )
@@ -221,11 +221,14 @@ mPlaceFeedback  7, 4, HIT
 mPlaceFeedback  8, 4, BLOW
 mPlaceFeedback  7, 5, BLOW
 
+call            PrintSolution
 
 push            FALSE
 push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
+
+
 
 
 ; End of program steps
@@ -513,14 +516,14 @@ PlaceFeedback ENDP
 GetUserCode PROC
 ; Author:           Brayden Aldrich
 ; Description:      Gets user input and updates user_guess array
-;                   
+;
 ;
 ; Parameters:       push OFFSET user_guess
 ;                   push TYPE   user_guess
-;                   
-;                   
 ;
-; Postconditions:   
+;
+;
+; Postconditions:
 ; -------------------------------------------------------- -
 push            EBP
 mov             EBP, ESP
@@ -540,7 +543,7 @@ _string:
     mov         EDX, OFFSET selectColor
     call        WriteString
 
-push            EAX                     
+push            EAX
 ;  loop until user inputs a code
 _loop:
     mov             EAX, 50
@@ -570,8 +573,8 @@ _increase:
 add             ECX, 1
 cmp             ECX, 7
 jge             _resetHigh
-jmp             _getColor    
-      
+jmp             _getColor
+
     _resetHigh:
     mov             ECX, 0
     _getColor:
@@ -583,7 +586,7 @@ jmp             _getColor
 
     _currentColor:
     ; somehow update the console to display the selection?
-    
+
 jmp             _loop
 _decrease:
 cmp             [EAX], 0
@@ -606,6 +609,45 @@ _invalid:
 
 _end:
 
-ret 
+ret
 GetUserCode ENDP
+
+
+; -------------------------------------------------------- -
+PrintSolution PROC
+; Author:           Cameron Kroeker
+; Description:      Prints the solution pegs into the [xx] spot on the table
+;
+; Parameters:
+;
+; Preconditions: Must have solution Array filled with at least 4 bytes. Gameboard must be printed before PROC is called.
+; Postconditions:  Color is set to white, EAX is set to 0.
+; -------------------------------------------------------- -
+
+mov EDI, 0              ; Set EDI to 0
+
+    ; Print the value stored in list[0]
+
+movzx EAX, solution[EDI]
+mPlacePeg       59, 7, EAX
+
+movzx EAX, solution[EDI+1]
+mPlacePeg       59, 9, EAX
+
+movzx EAX, solution[EDI+2]
+mPlacePeg       59, 11, EAX
+
+movzx EAX, solution[EDI+3]
+mPlacePeg       59, 13, EAX
+
+
+;Set color back to White
+push            8
+call            SetColorFromPalette
+
+
+mov EAX, 0
+ret
+PrintSolution ENDP
+
 END main
