@@ -246,8 +246,8 @@ msgHh5                      BYTE        LF, "blows: ", 0
 msgSpace                    BYTE        " ", 0
 
 userArray                   DWORD       4 DUP(?)
-currX                       DWORD       1
-currIndex                   DWORD       0
+currX                       DWORD       1               ; Helper var for GetUserCode. Will store current x coordinate.
+currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 .code
 main PROC; (insert executable instructions here)
 
@@ -288,8 +288,10 @@ push            OFFSET solution
 call            GenerateCode
 
 
+
 push            OFFSET userArray
 call            GetUserCode
+
 ; End of program steps
 mGotoXY         1, 20
 
@@ -710,11 +712,11 @@ GetUserCode PROC
 ;                   dynamically displays these choices, then stores desired color
 ;                   into userArray
 ;
-; Parameters:       push OFFSET array
-;                   call
-;                   
-;                   
+; Helper Variables: currX, currIndex, userArray
 ;
+; Parameters:       push OFFSET array
+;                   call 
+;                   
 ; Postconditions:   Updated userArray
 ; -------------------------------------------------------- -
 push            EBP
@@ -733,6 +735,12 @@ _string:
     mPrint          selectColor
 
 mGotoXY         1, 19                   ; Move cursor to (1, 19). This is where user will see their current choice
+
+; Initialize the screen and ECX to show a color before the user hits the arrow keys. 
+_preloop:
+mov             EAX, currX
+mov             ECX, 0
+mPlacePeg       al, 19, 0
 
 ;  loop until user inputs a code
 _loop:
@@ -786,18 +794,20 @@ jmp             _getColorLow
 jmp             _loop                   ; Loop until a new key press
 
 _enter:
-inc             currIndex               ; increment current index in userArray
-cmp             currIndex, 4            ; check to see if it's over array limit
-jge             _end
-mov             [EDI], ECX              ; add color number into current index    
+mov             [EDI], ECX              ; add color number into current index         
 add             EDI, 4                  ; increment current index
 mov             EAX, currX              ; move current x coordinate into eax
 add             EAX, 5                  ; incease it by 5
 mov             currX, EAX              ; store updated currX
-jmp             _loop                   ; loop to get a new number
+inc             currIndex               ; increment current index in userArray
+cmp             currIndex, 4            ; check to see if it's over array limit
+jge             _end
+jmp             _preloop                   ; loop to get a new number
 
 
 _end:                                   ; break out of loop and return
+push           8
+call           SetColorFromPalette      ; set color back to white
 
 pop            EDX
 pop            ECX
