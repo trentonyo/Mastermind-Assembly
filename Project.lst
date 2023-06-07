@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 15:56:45
 Mastermind			(AddTwo.asm		     Page 1 - 1
 
 
@@ -129,6 +129,8 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				; Use:          Pass an X and Y value (0-indexed) to move
 				;               the cursor
 				; --------------------------------------------------------
+				    push        EDX
+
 				    mov         dl, _x
 				    dec         dl
 				    mov         dh, _y
@@ -169,9 +171,46 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				    call        PlaceFeedback
 				ENDM
 
+				; --------------------------------------------------------
+				mIsArrayElementEqual  MACRO _iArray, _isEqual
+				; Author:       Hla Htun
+				; Description:  Checks if an array has all equal values
+				;
+				; Use:          Pass an array and a value to hold 0 or 1 (true or false)
+				;               for when an array has one same value in each index
+				; --------------------------------------------------------
+				    push 0
+				    push OFFSET _iArray
+				    push TYPE _iArray
+				    call ArrayAt
+				    mov EBX, EAX
+
+				    mov ECX, 1
+				    loopArraym:
+				        push ECX
+				        push OFFSET _iArray
+				        push TYPE _iArray
+				        call ArrayAt
+				        cmp EBX, EAX
+				        JNE isNotEqual
+				        cmp ECX, 3
+				        JE isEqual
+				        add ECX, 1
+				        mov EBX, EAX
+				        JMP loopArraym
+
+				    isEqual:
+				        mov _isEqual, 1
+				        JMP goBackNow
+
+				    isNotEqual:
+				        mov _isEqual, 0
+				        JMP goBackNow
 
 
+				    goBackNow:
 
+				ENDM
 
  00000000			.data
 
@@ -373,7 +412,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 
  00000364 00			current_round               BYTE        0
 
- 00000365  00000004 [		solution                    BYTE        CODE_LENGTH DUP(?)
+ 00000365  00000004 [		solution                    BYTE        CODE_LENGTH DUP(?) ; TODO What's this?
 	    00
 	   ]
  00000369  00000004 [		game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
@@ -381,12 +420,51 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 	     00
 	    ]
 	   ]
-
- 00000389  00000004 [		userArray                   DWORD       4 DUP(?)
-	    00000000
+				; Created for key inputs.Will hold current user's guess
+ 00000389  00000004 [		user_guess                  BYTE        CODE_LENGTH DUP(? )
+	    00
 	   ]
- 00000399 00000001		currX                       DWORD       1
- 0000039D 00000000		currIndex                   DWORD       0
+
+				; Hits and Blows            hits and blows will be stored in these variables
+ 0000038D 00000000		hits                        DWORD       ?
+ 00000391 00000000		blows                       DWORD       ?
+ 00000395 00000003		uArray                      DWORD       3, 3, 1, 3       ; user guesses
+	   00000003
+	   00000001
+	   00000003
+ 000003A5 00000003		solArray                    DWORD       3, 3, 3, 3       ; peg positions?
+	   00000003
+	   00000003
+	   00000003
+ 000003B5 00000000		helperVar1                  DWORD       ?
+ 000003B9 00000000		matches                     DWORD       ?
+
+				; Hits and Blows temporary helper variables   - feel free to delete after
+ 000003BD 43 6F 6D 70 61	msgHh1                      BYTE        "Comparing arrays", LF, 0
+	   72 69 6E 67 20
+	   61 72 72 61 79
+	   73 0A 00
+ 000003CF 55 73 65 72 20	msgHh2                      BYTE        "User array: ", 0
+	   61 72 72 61 79
+	   3A 20 00
+ 000003DC 0A 53 6F 6C 75	msgHh3                      BYTE        LF, "Solution array: ", 0
+	   74 69 6F 6E 20
+	   61 72 72 61 79
+	   3A 20 00
+ 000003EE 0A 68 69 74 73	msgHh4                      BYTE        LF, "hits: ", 0
+	   3A 20 00
+ 000003F6 0A 62 6C 6F 77	msgHh5                      BYTE        LF, "blows: ", 0
+	   73 3A 20 00
+ 000003FF 20 00			msgSpace                    BYTE        " ", 0
+
+ 00000401			userArray                   DWORD       4 DUP(?)
+ 00000411 0000000F		currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7
+ 00000415 00000007		currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
+ 00000419 00000000		currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
+
+
+
+
  00000000			.code
  00000000			main PROC; (insert executable instructions here)
 
@@ -400,7 +478,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
  00000003  E8 00000000 E	call            Randomize
 
  00000008  6A 08		push            8
- 0000000A  E8 000001CB		call            SetColorFromPalette
+ 0000000A  E8 000001E4		call            SetColorFromPalette
 
 				; --------------------------------------------------------
  0000000F			gameplay:
@@ -408,183 +486,195 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				; Runs the gameloop TODO contains test code right now
 				; --------------------------------------------------------
 
- 0000000F  E8 000000D9		call            DrawNewGameboard
+ 0000000F  E8 000000F2		call            DrawNewGameboard
 
 				mPlacePeg       7, 7, 2
- 00000014  B2 07	     2	    mov         dl, 7
- 00000016  FE CA	     2	    dec         dl
- 00000018  B6 07	     2	    mov         dh, 7
- 0000001A  FE CE	     2	    dec         dh
- 0000001C  E8 00000000 E     2	    call        Gotoxy
- 00000021  5A		     2	    pop         EDX
- 00000022  6A 02	     1	    push        2
- 00000024  E8 000001B1	     1	    call        SetColorFromPalette
- 00000029  52		     2	    push        EDX
- 0000002A  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
- 0000002F  E8 00000000 E     2	    call        WriteString
- 00000034  5A		     2	    pop         EDX
+ 00000014  52		     2	    push        EDX
+ 00000015  B2 07	     2	    mov         dl, 7
+ 00000017  FE CA	     2	    dec         dl
+ 00000019  B6 07	     2	    mov         dh, 7
+ 0000001B  FE CE	     2	    dec         dh
+ 0000001D  E8 00000000 E     2	    call        Gotoxy
+ 00000022  5A		     2	    pop         EDX
+ 00000023  6A 02	     1	    push        2
+ 00000025  E8 000001C9	     1	    call        SetColorFromPalette
+ 0000002A  52		     2	    push        EDX
+ 0000002B  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000030  E8 00000000 E     2	    call        WriteString
+ 00000035  5A		     2	    pop         EDX
 				mPlacePeg       7, 9, 5
- 00000035  B2 07	     2	    mov         dl, 7
- 00000037  FE CA	     2	    dec         dl
- 00000039  B6 09	     2	    mov         dh, 9
- 0000003B  FE CE	     2	    dec         dh
- 0000003D  E8 00000000 E     2	    call        Gotoxy
- 00000042  5A		     2	    pop         EDX
- 00000043  6A 05	     1	    push        5
- 00000045  E8 00000190	     1	    call        SetColorFromPalette
- 0000004A  52		     2	    push        EDX
- 0000004B  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
- 00000050  E8 00000000 E     2	    call        WriteString
- 00000055  5A		     2	    pop         EDX
+ 00000036  52		     2	    push        EDX
+ 00000037  B2 07	     2	    mov         dl, 7
+ 00000039  FE CA	     2	    dec         dl
+ 0000003B  B6 09	     2	    mov         dh, 9
+ 0000003D  FE CE	     2	    dec         dh
+ 0000003F  E8 00000000 E     2	    call        Gotoxy
+ 00000044  5A		     2	    pop         EDX
+ 00000045  6A 05	     1	    push        5
+ 00000047  E8 000001A7	     1	    call        SetColorFromPalette
+ 0000004C  52		     2	    push        EDX
+ 0000004D  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000052  E8 00000000 E     2	    call        WriteString
+ 00000057  5A		     2	    pop         EDX
 				mPlacePeg       7, 11, 1
- 00000056  B2 07	     2	    mov         dl, 7
- 00000058  FE CA	     2	    dec         dl
- 0000005A  B6 0B	     2	    mov         dh, 11
- 0000005C  FE CE	     2	    dec         dh
- 0000005E  E8 00000000 E     2	    call        Gotoxy
- 00000063  5A		     2	    pop         EDX
- 00000064  6A 01	     1	    push        1
- 00000066  E8 0000016F	     1	    call        SetColorFromPalette
- 0000006B  52		     2	    push        EDX
- 0000006C  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
- 00000071  E8 00000000 E     2	    call        WriteString
- 00000076  5A		     2	    pop         EDX
+ 00000058  52		     2	    push        EDX
+ 00000059  B2 07	     2	    mov         dl, 7
+ 0000005B  FE CA	     2	    dec         dl
+ 0000005D  B6 0B	     2	    mov         dh, 11
+ 0000005F  FE CE	     2	    dec         dh
+ 00000061  E8 00000000 E     2	    call        Gotoxy
+ 00000066  5A		     2	    pop         EDX
+ 00000067  6A 01	     1	    push        1
+ 00000069  E8 00000185	     1	    call        SetColorFromPalette
+ 0000006E  52		     2	    push        EDX
+ 0000006F  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000074  E8 00000000 E     2	    call        WriteString
+ 00000079  5A		     2	    pop         EDX
 				mPlacePeg       7, 13, 4
- 00000077  B2 07	     2	    mov         dl, 7
- 00000079  FE CA	     2	    dec         dl
- 0000007B  B6 0D	     2	    mov         dh, 13
- 0000007D  FE CE	     2	    dec         dh
- 0000007F  E8 00000000 E     2	    call        Gotoxy
- 00000084  5A		     2	    pop         EDX
- 00000085  6A 04	     1	    push        4
- 00000087  E8 0000014E	     1	    call        SetColorFromPalette
- 0000008C  52		     2	    push        EDX
- 0000008D  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
- 00000092  E8 00000000 E     2	    call        WriteString
- 00000097  5A		     2	    pop         EDX
+ 0000007A  52		     2	    push        EDX
+ 0000007B  B2 07	     2	    mov         dl, 7
+ 0000007D  FE CA	     2	    dec         dl
+ 0000007F  B6 0D	     2	    mov         dh, 13
+ 00000081  FE CE	     2	    dec         dh
+ 00000083  E8 00000000 E     2	    call        Gotoxy
+ 00000088  5A		     2	    pop         EDX
+ 00000089  6A 04	     1	    push        4
+ 0000008B  E8 00000163	     1	    call        SetColorFromPalette
+ 00000090  52		     2	    push        EDX
+ 00000091  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000096  E8 00000000 E     2	    call        WriteString
+ 0000009B  5A		     2	    pop         EDX
 
 				mPlaceFeedback  7, 4, HIT
- 00000098  6A 07	     1	    push        7
- 0000009A  6A 04	     1	    push        4
- 0000009C  6A 02	     1	    push        HIT
- 0000009E  E8 00000190	     1	    call        PlaceFeedback
+ 0000009C  6A 07	     1	    push        7
+ 0000009E  6A 04	     1	    push        4
+ 000000A0  6A 02	     1	    push        HIT
+ 000000A2  E8 00000186	     1	    call        PlaceFeedback
 				mPlaceFeedback  8, 4, BLOW
- 000000A3  6A 08	     1	    push        8
- 000000A5  6A 04	     1	    push        4
- 000000A7  6A 01	     1	    push        BLOW
- 000000A9  E8 00000185	     1	    call        PlaceFeedback
+ 000000A7  6A 08	     1	    push        8
+ 000000A9  6A 04	     1	    push        4
+ 000000AB  6A 01	     1	    push        BLOW
+ 000000AD  E8 0000017B	     1	    call        PlaceFeedback
 				mPlaceFeedback  7, 5, BLOW
- 000000AE  6A 07	     1	    push        7
- 000000B0  6A 05	     1	    push        5
- 000000B2  6A 01	     1	    push        BLOW
- 000000B4  E8 0000017A	     1	    call        PlaceFeedback
+ 000000B2  6A 07	     1	    push        7
+ 000000B4  6A 05	     1	    push        5
+ 000000B6  6A 01	     1	    push        BLOW
+ 000000B8  E8 00000170	     1	    call        PlaceFeedback
+
+ 000000BD  E8 00000277		call            PrintSolution
+
+ 000000C2  6A 00		push            FALSE
+ 000000C4  6A 01		push            TYPE solution
+ 000000C6  68 00000365 R	push            OFFSET solution
+ 000000CB  E8 000000BD		call            GenerateCode
 
 
- 000000B9  6A 00		push            FALSE
- 000000BB  6A 01		push            TYPE solution
- 000000BD  68 00000365 R	push            OFFSET solution
- 000000C2  E8 000000AD		call            GenerateCode
 
-				; push            OFFSET userArray
-				; call            ListenUser
-				; call            CheckSimilar
+ 000000D0  68 00000401 R	push            OFFSET userArray
+ 000000D5  E8 00000311		call            GetUserCode
 
- 000000C7  68 00000389 R	push            OFFSET userArray
- 000000CC  E8 000001D9		call            GetUserCode
+
 				; End of program steps
 				mGotoXY         1, 20
- 000000D1  B2 01	     1	    mov         dl, 1
- 000000D3  FE CA	     1	    dec         dl
- 000000D5  B6 14	     1	    mov         dh, 20
- 000000D7  FE CE	     1	    dec         dh
- 000000D9  E8 00000000 E     1	    call        Gotoxy
- 000000DE  5A		     1	    pop         EDX
+ 000000DA  52		     1	    push        EDX
+ 000000DB  B2 01	     1	    mov         dl, 1
+ 000000DD  FE CA	     1	    dec         dl
+ 000000DF  B6 14	     1	    mov         dh, 20
+ 000000E1  FE CE	     1	    dec         dh
+ 000000E3  E8 00000000 E     1	    call        Gotoxy
+ 000000E8  5A		     1	    pop         EDX
 
- 000000DF  6A 08		push            8
- 000000E1  E8 000000F4		call            SetColorFromPalette
-				exit                                    ; exit to operating system
- 000000E6  6A 00	   *	    push   +000000000h
- 000000E8  E8 00000000 E   *	    call   ExitProcess
- 000000ED			main ENDP
+ 000000E9  6A 08		push            8
+ 000000EB  E8 00000103		call            SetColorFromPalette
+
+				; comparing uArray and solArray elements - updates hits and blows
+ 000000F0  68 00000391 R	push            OFFSET blows
+ 000000F5  68 0000038D R	push            OFFSET hits
+ 000000FA  E8 000001A5		call            CheckSimilar
+
+				invoke EXITProcess, 0		; exit to operating system
+ 000000FF  6A 00	   *	    push   +000000000h
+ 00000101  E8 00000000 E   *	    call   ExitProcess
+ 00000106			main ENDP
 
 				; (insert additional procedures here)
 
 				; -------------------------------------------------------- -
- 000000ED			DrawNewGameboard PROC
+ 00000106			DrawNewGameboard PROC
 				; Author:           Trenton Young
 				; Description:      Simply clears the screen and draws a new gameboard
 				;
 				; Preconditions:    Define global gameboard strings
 				; Postconditions:   Screen is cleared, new gameboard is written
 				; -------------------------------------------------------- -
- 000000ED  51			push        ECX
+ 00000106  51			push        ECX
 
- 000000EE  E8 00000000 E	call        Clrscr
+ 00000107  E8 00000000 E	call        Clrscr
 
 				mPrint      GUI_gameboard_A
- 000000F3  52		     1	    push        EDX
- 000000F4  BA 00000000 R     1	    mov         EDX, OFFSET GUI_gameboard_A
- 000000F9  E8 00000000 E     1	    call        WriteString
- 000000FE  5A		     1	    pop         EDX
+ 0000010C  52		     1	    push        EDX
+ 0000010D  BA 00000000 R     1	    mov         EDX, OFFSET GUI_gameboard_A
+ 00000112  E8 00000000 E     1	    call        WriteString
+ 00000117  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_B
- 000000FF  52		     1	    push        EDX
- 00000100  BA 00000054 R     1	    mov         EDX, OFFSET GUI_gameboard_B
- 00000105  E8 00000000 E     1	    call        WriteString
- 0000010A  5A		     1	    pop         EDX
+ 00000118  52		     1	    push        EDX
+ 00000119  BA 00000054 R     1	    mov         EDX, OFFSET GUI_gameboard_B
+ 0000011E  E8 00000000 E     1	    call        WriteString
+ 00000123  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_C
- 0000010B  52		     1	    push        EDX
- 0000010C  BA 000000A8 R     1	    mov         EDX, OFFSET GUI_gameboard_C
- 00000111  E8 00000000 E     1	    call        WriteString
- 00000116  5A		     1	    pop         EDX
+ 00000124  52		     1	    push        EDX
+ 00000125  BA 000000A8 R     1	    mov         EDX, OFFSET GUI_gameboard_C
+ 0000012A  E8 00000000 E     1	    call        WriteString
+ 0000012F  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_DE
- 00000117  52		     1	    push        EDX
- 00000118  BA 000000FC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
- 0000011D  E8 00000000 E     1	    call        WriteString
- 00000122  5A		     1	    pop         EDX
+ 00000130  52		     1	    push        EDX
+ 00000131  BA 000000FC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
+ 00000136  E8 00000000 E     1	    call        WriteString
+ 0000013B  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_DE
- 00000123  52		     1	    push        EDX
- 00000124  BA 000000FC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
- 00000129  E8 00000000 E     1	    call        WriteString
- 0000012E  5A		     1	    pop         EDX
+ 0000013C  52		     1	    push        EDX
+ 0000013D  BA 000000FC R     1	    mov         EDX, OFFSET GUI_gameboard_DE
+ 00000142  E8 00000000 E     1	    call        WriteString
+ 00000147  5A		     1	    pop         EDX
 
- 0000012F  B9 00000004		mov         ECX, ROWS
- 00000134			_printPlayArea:
+ 00000148  B9 00000004		mov         ECX, ROWS
+ 0000014D			_printPlayArea:
 				    mPrint      GUI_gameboard_SPACE
- 00000134  52		     1	    push        EDX
- 00000135  BA 00000150 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
- 0000013A  E8 00000000 E     1	    call        WriteString
- 0000013F  5A		     1	    pop         EDX
+ 0000014D  52		     1	    push        EDX
+ 0000014E  BA 00000150 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
+ 00000153  E8 00000000 E     1	    call        WriteString
+ 00000158  5A		     1	    pop         EDX
 				    mPrint      GUI_gameboard_PEG
- 00000140  52		     1	    push        EDX
- 00000141  BA 000001A4 R     1	    mov         EDX, OFFSET GUI_gameboard_PEG
- 00000146  E8 00000000 E     1	    call        WriteString
- 0000014B  5A		     1	    pop         EDX
+ 00000159  52		     1	    push        EDX
+ 0000015A  BA 000001A4 R     1	    mov         EDX, OFFSET GUI_gameboard_PEG
+ 0000015F  E8 00000000 E     1	    call        WriteString
+ 00000164  5A		     1	    pop         EDX
 
- 0000014C  E2 E6		    loop        _printPlayArea
+ 00000165  E2 E6		    loop        _printPlayArea
 
 				mPrint      GUI_gameboard_ACCENT
- 0000014E  52		     1	    push        EDX
- 0000014F  BA 000001F8 R     1	    mov         EDX, OFFSET GUI_gameboard_ACCENT
- 00000154  E8 00000000 E     1	    call        WriteString
- 00000159  5A		     1	    pop         EDX
+ 00000167  52		     1	    push        EDX
+ 00000168  BA 000001F8 R     1	    mov         EDX, OFFSET GUI_gameboard_ACCENT
+ 0000016D  E8 00000000 E     1	    call        WriteString
+ 00000172  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_SPACE
- 0000015A  52		     1	    push        EDX
- 0000015B  BA 00000150 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
- 00000160  E8 00000000 E     1	    call        WriteString
- 00000165  5A		     1	    pop         EDX
+ 00000173  52		     1	    push        EDX
+ 00000174  BA 00000150 R     1	    mov         EDX, OFFSET GUI_gameboard_SPACE
+ 00000179  E8 00000000 E     1	    call        WriteString
+ 0000017E  5A		     1	    pop         EDX
 				mPrint      GUI_gameboard_Z
- 00000166  52		     1	    push        EDX
- 00000167  BA 0000024C R     1	    mov         EDX, OFFSET GUI_gameboard_Z
- 0000016C  E8 00000000 E     1	    call        WriteString
- 00000171  5A		     1	    pop         EDX
+ 0000017F  52		     1	    push        EDX
+ 00000180  BA 0000024C R     1	    mov         EDX, OFFSET GUI_gameboard_Z
+ 00000185  E8 00000000 E     1	    call        WriteString
+ 0000018A  5A		     1	    pop         EDX
 
- 00000172  59			pop         ECX
+ 0000018B  59			pop         ECX
 
- 00000173  C3			ret
- 00000174			DrawNewGameboard ENDP
+ 0000018C  C3			ret
+ 0000018D			DrawNewGameboard ENDP
 
 				; -------------------------------------------------------- -
- 00000174			GenerateCode PROC
+ 0000018D			GenerateCode PROC
 				; Author:           Trenton Young
 				; Description:      Generates a code of the length defined by the
 				;                   const CODE_LENGTH, if TRUE is passed as a
@@ -598,66 +688,66 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				; Preconditions:    Define global const CODE_LENGTH
 				; Postconditions:   Target will contain the new code
 				; -------------------------------------------------------- -
- 00000174  55			push        EBP
- 00000175  8B EC		mov         EBP, ESP    ; register-indirect initialization
+ 0000018D  55			push        EBP
+ 0000018E  8B EC		mov         EBP, ESP    ; register-indirect initialization
 
- 00000177  50			push        EAX
- 00000178  53			push        EBX
- 00000179  51			push        ECX
- 0000017A  52			push        EDX
+ 00000190  50			push        EAX
+ 00000191  53			push        EBX
+ 00000192  51			push        ECX
+ 00000193  52			push        EDX
 
- 0000017B			_stackFrame:
- 0000017B  B9 00000004		    mov     ECX, CODE_LENGTH
- 00000180  8B 55 10		    mov     EDX, [EBP + 16]         ; [OPTIONAL] if TRUE, will allow duplicates in code
- 00000183  8B 5D 0C		    mov     EBX, [EBP + 12]         ; TYPE of target array
- 00000186  8B 45 08		    mov     EAX, [EBP + 8]          ; OFFSET of target array
+ 00000194			_stackFrame:
+ 00000194  B9 00000004		    mov     ECX, CODE_LENGTH
+ 00000199  8B 55 10		    mov     EDX, [EBP + 16]         ; [OPTIONAL] if TRUE, will allow duplicates in code
+ 0000019C  8B 5D 0C		    mov     EBX, [EBP + 12]         ; TYPE of target array
+ 0000019F  8B 45 08		    mov     EAX, [EBP + 8]          ; OFFSET of target array
 
- 00000189			_generateCode:
- 00000189  51			    push    ECX                     ; Preserve loop counter
+ 000001A2			_generateCode:
+ 000001A2  51			    push    ECX                     ; Preserve loop counter
 
 				    mArand  1, COLORS, ECX          ; Get a random number and store to EDX
- 0000018A  50		     1	    push        EAX
- 0000018B  B8 00000008	     1	    mov         EAX, COLORS
- 00000190  83 E8 01	     1	    sub         EAX, 1
- 00000193  40		     1	    inc         EAX
- 00000194  E8 00000000 E     1	    call        RandomRange
- 00000199  83 C0 01	     1	    add         EAX, 1
- 0000019C  8B C8	     1	    mov         ECX, EAX
- 0000019E  58		     1	    pop         EAX
+ 000001A3  50		     1	    push        EAX
+ 000001A4  B8 00000008	     1	    mov         EAX, COLORS
+ 000001A9  83 E8 01	     1	    sub         EAX, 1
+ 000001AC  40		     1	    inc         EAX
+ 000001AD  E8 00000000 E     1	    call        RandomRange
+ 000001B2  83 C0 01	     1	    add         EAX, 1
+ 000001B5  8B C8	     1	    mov         ECX, EAX
+ 000001B7  58		     1	    pop         EAX
 
- 0000019F  83 FA 01		    cmp     EDX, TRUE
- 000001A2  74 0B		    je     _allowDuplicates
+ 000001B8  83 FA 01		    cmp     EDX, TRUE
+ 000001BB  74 0B		    je     _allowDuplicates
 
 				    ; ELSE, check if random number is already in code
- 000001A4  8B D1		    mov     EDX, ECX                ; EDX is now random number
- 000001A6  59			    pop     ECX                     ; ECX is loop counter again
+ 000001BD  8B D1		    mov     EDX, ECX                ; EDX is now random number
+ 000001BF  59			    pop     ECX                     ; ECX is loop counter again
 
 				    ; TODO check code, can probably somehow use the code checking proc that needs to be written for gameplay
 
- 000001A7  51			    push    ECX                     ; _allowDuplicates expects a floating loop counter
- 000001A8  8B CA		    mov     ECX, EDX                ; and for the random number to be stored in ECX
- 000001AA  BA 00000000		    mov     EDX, FALSE              ; reset EDX to FALSE, it was overwritten in this process and we know it to be false
- 000001AF			    _allowDuplicates:
- 000001AF  89 08		    mov     [EAX], ECX              ; Store in next index
+ 000001C0  51			    push    ECX                     ; _allowDuplicates expects a floating loop counter
+ 000001C1  8B CA		    mov     ECX, EDX                ; and for the random number to be stored in ECX
+ 000001C3  BA 00000000		    mov     EDX, FALSE              ; reset EDX to FALSE, it was overwritten in this process and we know it to be false
+ 000001C8			    _allowDuplicates:
+ 000001C8  89 08		    mov     [EAX], ECX              ; Store in next index
 
- 000001B1  59			    pop     ECX                     ; restore loop counter
+ 000001CA  59			    pop     ECX                     ; restore loop counter
 
- 000001B2  03 C3		    add     EAX, EBX                ; Increment index
+ 000001CB  03 C3		    add     EAX, EBX                ; Increment index
 
- 000001B4  E2 D3		    loop    _generateCode
+ 000001CD  E2 D3		    loop    _generateCode
 
- 000001B6  5A			pop         EDX
- 000001B7  59			pop         ECX
- 000001B8  5B			pop         EBX
- 000001B9  58			pop         EAX
- 000001BA  5D			pop         EBP
+ 000001CF  5A			pop         EDX
+ 000001D0  59			pop         ECX
+ 000001D1  5B			pop         EBX
+ 000001D2  58			pop         EAX
+ 000001D3  5D			pop         EBP
 
- 000001BB  C2 000C		ret         12
- 000001BE			GenerateCode ENDP
+ 000001D4  C2 000C		ret         12
+ 000001D7			GenerateCode ENDP
 
 
 				; -------------------------------------------------------- -
- 000001BE			ArrayAt PROC
+ 000001D7			ArrayAt PROC
 				; Author:           Trenton Young
 				; Description:      Gets the nth element from an array and stores
 				;                   it in EAX
@@ -669,34 +759,33 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				;
 				; Postconditions:   EAX will contain the value of array[n]
 				; -------------------------------------------------------- -
- 000001BE  55			push                EBP
- 000001BF  8B EC		mov                 EBP, ESP
+ 000001D7  55			push                EBP
+ 000001D8  8B EC		mov                 EBP, ESP
 
- 000001C1  53			push                EBX
- 000001C2  51			push                ECX
- 000001C3  52			push                EDX
+ 000001DA  53			push                EBX
+ 000001DB  51			push                ECX
+ 000001DC  52			push                EDX
 
- 000001C4			_stackFrame:
- 000001C4  8B 45 10		    mov             EAX, [EBP + 16]         ; n
- 000001C7  8B 5D 0C		    mov             EBX, [EBP + 12]         ; OFFSET array
- 000001CA  8B 4D 08		    mov             ECX, [EBP + 8]          ; TYPE array
+ 000001DD			_stackFrame:
+ 000001DD  8B 45 10		    mov             EAX, [EBP + 16]         ; n
+ 000001E0  8B 5D 0C		    mov             EBX, [EBP + 12]         ; OFFSET array
+ 000001E3  8B 4D 08		    mov             ECX, [EBP + 8]          ; TYPE array
 
- 000001CD  F7 E1		mul                 ECX                     ; Multiply n by the type of the array
- 000001CF  03 D8		add                 EBX, EAX                ; Get to array[n]
- 000001D1  8B 03		mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
+ 000001E6  F7 E1		mul                 ECX                     ; Multiply n by the type of the array
+ 000001E8  03 D8		add                 EBX, EAX                ; Get to array[n]
+ 000001EA  8B 03		mov                 EAX, [EBX]              ; Save the value of array[n] to EAX
 
- 000001D3  5A			pop                 EDX
- 000001D4  59			pop                 ECX
- 000001D5  5B			pop                 EBX
+ 000001EC  5A			pop                 EDX
+ 000001ED  59			pop                 ECX
+ 000001EE  5B			pop                 EBX
 
- 000001D6  5D			pop                 EBP
+ 000001EF  5D			pop                 EBP
 
- 000001D7  C2 000C		ret 12
- 000001DA			ArrayAt ENDP
-
+ 000001F0  C2 000C		ret 12
+ 000001F3			ArrayAt ENDP
 
 				; -------------------------------------------------------- -
- 000001DA			SetColorFromPalette PROC
+ 000001F3			SetColorFromPalette PROC
 				; Author:           Trenton Young
 				; Description:      Sets the text color to predefined palette
 				;
@@ -706,113 +795,52 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				; Preconditions:    Parallel arrays for text and background colors
 				; Postconditions:   Text color is changed
 				; -------------------------------------------------------- -
- 000001DA  55			push                EBP
- 000001DB  8B EC		mov                 EBP, ESP
+ 000001F3  55			push                EBP
+ 000001F4  8B EC		mov                 EBP, ESP
 
- 000001DD  50			push                EAX
- 000001DE  53			push                EBX
- 000001DF  51			push                ECX
+ 000001F6  50			push                EAX
+ 000001F7  53			push                EBX
+ 000001F8  51			push                ECX
 
- 000001E0			_stackFrame:
- 000001E0  8B 4D 08		    mov             ECX, [EBP + 8]          ; n
+ 000001F9			_stackFrame:
+ 000001F9  8B 4D 08		    mov             ECX, [EBP + 8]          ; n
 
 				; Get the nth element of the background colormap
- 000001E3  51			push                ECX
- 000001E4  68 000002A7 R	push                OFFSET MAP_background_color
- 000001E9  6A 04		push                TYPE MAP_background_color
- 000001EB  E8 FFFFFFCE		call                ArrayAt
+ 000001FC  51			push                ECX
+ 000001FD  68 000002A7 R	push                OFFSET MAP_background_color
+ 00000202  6A 04		push                TYPE MAP_background_color
+ 00000204  E8 FFFFFFCE		call                ArrayAt
 
 				; Multiply by 16 to shift to background position
- 000001F0  BB 00000010		mov                 EBX, 16
- 000001F5  F7 E3		mul                 EBX
+ 00000209  BB 00000010		mov                 EBX, 16
+ 0000020E  F7 E3		mul                 EBX
 
 				; Preserve background in EBX
- 000001F7  8B D8		mov                 EBX, EAX
+ 00000210  8B D8		mov                 EBX, EAX
 
 				; Get the nth element of the foreground colormap
- 000001F9  51			push                ECX
- 000001FA  68 000002D3 R	push                OFFSET MAP_text_color
- 000001FF  6A 04		push                TYPE MAP_text_color
- 00000201  E8 FFFFFFB8		call                ArrayAt
+ 00000212  51			push                ECX
+ 00000213  68 000002D3 R	push                OFFSET MAP_text_color
+ 00000218  6A 04		push                TYPE MAP_text_color
+ 0000021A  E8 FFFFFFB8		call                ArrayAt
 
 				; Add the background mask back on to EAX
- 00000206  03 C3		add                 EAX, EBX
+ 0000021F  03 C3		add                 EAX, EBX
 
 				; Finally, set the color
- 00000208  E8 00000000 E	call                SetTextColor
+ 00000221  E8 00000000 E	call                SetTextColor
 
- 0000020D  59			pop                 ECX
- 0000020E  5B			pop                 EBX
- 0000020F  58			pop                 EAX
+ 00000226  59			pop                 ECX
+ 00000227  5B			pop                 EBX
+ 00000228  58			pop                 EAX
 
- 00000210  5D			pop                 EBP
+ 00000229  5D			pop                 EBP
 
- 00000211  C2 0004		ret 4
- 00000214			SetColorFromPalette ENDP
-
-				; -------------------------------------------------------- -
- 00000214			ListenUser PROC
-				; Author:           Hla Htun
-				; Description:      Takes in 4 user input and stores it in the array
-				;
-				; Parameters:
-				;                   push OFFSET userArray
-				;                   push TYPE userArray
-				;                   call
-				; Preconditions:    An array as a parameter to store the 4 user inputs
-				; Postconditions:   None. The array passed will be updated with the user input
-				; -------------------------------------------------------- -
-				    ; call readDec
-				    ; store to array
-
-				    ; loop until 4
- 00000214  55			    push EBP
- 00000215  8B EC		    mov EBP, ESP
- 00000217  60			    pushad
-
-
- 00000218  8B 7D 08		    mov EDI, [EBP+8]
- 0000021B  B9 00000004		    mov ECX, 4
- 00000220			    askUser:
- 00000220  E8 00000000 E	        call ReadInt
- 00000225  89 07		        mov [EDI], EAX
- 00000227  83 F9 00		        cmp ECX, 0
-				        ;JE outOfAskUser
- 0000022A  83 E9 01		        sub ECX, 1
- 0000022D  EB F1		        JMP askUser
-
- 0000022F  61			    popad
- 00000230  5D			    pop EBP
- 00000231  C3			    ret
- 00000232			ListenUser ENDP
-
-				; -------------------------------------------------------- -
- 00000232			CheckSimilar PROC
-				; Author:           Hla Htun
-				; Description:      Takes in two arrays. Counts the number of
-				;                   indices with identical values between arrays (i.e. hits)
-				;                   Next, counts the number of values shared between arrays
-				;                   subtracts hits from blows and returns each value
-				;
-				; Parameters:
-				;                   push OFFSET solArray
-				;                   push TYPE solArray
-				;                   push OFFSET userArray
-				;                   push TYPE userArray
-				;                   call
-				; Postconditions:   Returns the number of hits and blows, i.e. ret hits, blows
-				; -------------------------------------------------------- -
-				    ;push    EBP
-				    ;push    EBP, ESP
-
-
-
-				    ;pop     EBP
- 00000232  C3			    ret
- 00000233			CheckSimilar ENDP
+ 0000022A  C2 0004		ret 4
+ 0000022D			SetColorFromPalette ENDP
 
 				; --------------------------------------------------------
- 00000233			PlaceFeedback PROC
+ 0000022D			PlaceFeedback PROC
 				; Author:       Trenton Young
 				; Description:  Draws a feedback peg at the specified location.
 				;               Pass an X and Y value (0-indexed) and a number
@@ -824,231 +852,460 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
 				; Parameters:   PUSH x
 				;               PUSH y
 				;               PUSH feedback
-				;               call
+;               call
 				;
 				; --------------------------------------------------------
- 00000233  55			push            EBP
- 00000234  8B EC		mov             EBP, ESP
+ 0000022D  55			push            EBP
+ 0000022E  8B EC		mov             EBP, ESP
 
- 00000236  50			push            EAX
- 00000237  53			push            EBX
- 00000238  51			push            ECX
- 00000239  52			push            EDX
+ 00000230  50			push            EAX
+ 00000231  53			push            EBX
+ 00000232  51			push            ECX
+ 00000233  52			push            EDX
 
- 0000023A			_stackFrame:
- 0000023A  8B 4D 10		    mov         ECX, [EBP + 16]         ; x
- 0000023D  8B 5D 0C		    mov         EBX, [EBP + 12]         ; y
- 00000240  8B 45 08		    mov         EAX, [EBP + 8]          ; feedback
+ 00000234			_stackFrame:
+ 00000234  8B 4D 10		    mov         ECX, [EBP + 16]         ; x
+ 00000237  8B 5D 0C		    mov         EBX, [EBP + 12]         ; y
+ 0000023A  8B 45 08		    mov         EAX, [EBP + 8]          ; feedback
 
- 00000243			_moveCursor:
- 00000243  50			    push        EAX
+ 0000023D			_moveCursor:
+ 0000023D  50			    push        EAX
 
- 00000244  8B C3		    mov         EAX, EBX                ; insert y
- 00000246  48			    dec         EAX                     ; shift back for 1-indexing
- 00000247  BB 00000100		    mov         EBX, 256
- 0000024C  F7 E3		    mul         EBX                     ; shift y to subregister AH
+ 0000023E  8B C3		    mov         EAX, EBX                ; insert y
+ 00000240  48			    dec         EAX                     ; shift back for 1-indexing
+ 00000241  BB 00000100		    mov         EBX, 256
+ 00000246  F7 E3		    mul         EBX                     ; shift y to subregister AH
 
- 0000024E  03 C1		    add         EAX, ECX                ; insert x to subregister AL
- 00000250  48			    dec         EAX                     ; shift back for 1-indexing
+ 00000248  03 C1		    add         EAX, ECX                ; insert x to subregister AL
+ 0000024A  48			    dec         EAX                     ; shift back for 1-indexing
 
- 00000251  8B D0		    mov         EDX, EAX                ; move y to DH, x to DL
+ 0000024B  8B D0		    mov         EDX, EAX                ; move y to DH, x to DL
 
- 00000253  E8 00000000 E	    call        GotoXY
- 00000258  58			    pop         EAX
+ 0000024D  E8 00000000 E	    call        GotoXY
+ 00000252  58			    pop         EAX
 
- 00000259  83 F8 02		cmp             EAX, HIT
- 0000025C  74 2F		je              _hit
+ 00000253  83 F8 02		cmp             EAX, HIT
+ 00000256  74 2F		je              _hit
 
- 0000025E  83 F8 01		cmp             EAX, BLOW
- 00000261  74 15		je              _blow
+ 00000258  83 F8 01		cmp             EAX, BLOW
+ 0000025B  74 15		je              _blow
 
- 00000263			_miss:
- 00000263  6A 08		    push        8
- 00000265  E8 FFFFFF70		    call        SetColorFromPalette
+ 0000025D			_miss:
+ 0000025D  6A 08		    push        8
+ 0000025F  E8 FFFFFF8F		    call        SetColorFromPalette
 				    mPrint      GUI_feedback_miss
- 0000026A  52		     1	    push        EDX
- 0000026B  BA 000002A5 R     1	    mov         EDX, OFFSET GUI_feedback_miss
- 00000270  E8 00000000 E     1	    call        WriteString
- 00000275  5A		     1	    pop         EDX
- 00000276  EB 2A		    jmp         _done
- 00000278			_blow:
- 00000278  6A 09		    push        9
- 0000027A  E8 FFFFFF5B		    call        SetColorFromPalette
+ 00000264  52		     1	    push        EDX
+ 00000265  BA 000002A5 R     1	    mov         EDX, OFFSET GUI_feedback_miss
+ 0000026A  E8 00000000 E     1	    call        WriteString
+ 0000026F  5A		     1	    pop         EDX
+ 00000270  EB 2A		    jmp         _done
+ 00000272			_blow:
+ 00000272  6A 09		    push        9
+ 00000274  E8 FFFFFF7A		    call        SetColorFromPalette
 				    mPrint      GUI_feedback_blow
- 0000027F  52		     1	    push        EDX
- 00000280  BA 000002A3 R     1	    mov         EDX, OFFSET GUI_feedback_blow
- 00000285  E8 00000000 E     1	    call        WriteString
- 0000028A  5A		     1	    pop         EDX
- 0000028B  EB 15		    jmp         _done
- 0000028D			_hit:
- 0000028D  6A 0A		    push        10
- 0000028F  E8 FFFFFF46		    call        SetColorFromPalette
+ 00000279  52		     1	    push        EDX
+ 0000027A  BA 000002A3 R     1	    mov         EDX, OFFSET GUI_feedback_blow
+ 0000027F  E8 00000000 E     1	    call        WriteString
+ 00000284  5A		     1	    pop         EDX
+ 00000285  EB 15		    jmp         _done
+ 00000287			_hit:
+ 00000287  6A 0A		    push        10
+ 00000289  E8 FFFFFF65		    call        SetColorFromPalette
 				    mPrint      GUI_feedback_hit
- 00000294  52		     1	    push        EDX
- 00000295  BA 000002A1 R     1	    mov         EDX, OFFSET GUI_feedback_hit
- 0000029A  E8 00000000 E     1	    call        WriteString
- 0000029F  5A		     1	    pop         EDX
- 000002A0  EB 00		    jmp         _done
+ 0000028E  52		     1	    push        EDX
+ 0000028F  BA 000002A1 R     1	    mov         EDX, OFFSET GUI_feedback_hit
+ 00000294  E8 00000000 E     1	    call        WriteString
+ 00000299  5A		     1	    pop         EDX
+ 0000029A  EB 00		    jmp         _done
 
- 000002A2			_done:
+ 0000029C			_done:
 
- 000002A2  5A			pop             EDX
- 000002A3  59			pop             ECX
- 000002A4  5B			pop             EBX
- 000002A5  58			pop             EAX
+ 0000029C  5A			pop             EDX
+ 0000029D  59			pop             ECX
+ 0000029E  5B			pop             EBX
+ 0000029F  58			pop             EAX
 
- 000002A6  5D			pop             EBP
+ 000002A0  5D			pop             EBP
 
- 000002A7  C2 000C		ret 12
- 000002AA			PlaceFeedback ENDP
+ 000002A1  C2 000C		ret 12
+ 000002A4			PlaceFeedback ENDP
+
 
 				; -------------------------------------------------------- -
- 000002AA			GetUserCode PROC
+ 000002A4			CheckSimilar PROC
+				; Author:           Hla Htun
+				; Description:      Uses two arrays along with 'hits' and 'blows' variable.
+				;                   Counts the number of indices with identical values between
+				;                   arrays (i.e. hits)
+				;                   Next, counts the number of values shared between arrays
+				;                   subtracts hits from blows and returns each value
+				;                   Finally updates the hits and blows variables
+				;
+				; Parameters:
+				;                   push OFFSET blows       [12]
+				;                   push OFFSEt hits        [8]
+				;                   call
+				;
+				; Preconditions:    Must have uArray and solArray as global variables
+				;                   Both of the arrays must have a size of 4
+				;                   Additional global variables needed:
+				;                   helperVar1, matches
+				;
+				; Postconditions:   Returns the number of hits and blows
+				; -------------------------------------------------------- -
+ 000002A4  55			    push    EBP
+ 000002A5  8B EC		    mov     EBP, ESP
+
+ 000002A7  B9 00000000		    mov     ECX, 0
+ 000002AC			    PrintuArray:
+ 000002AC  51			        push    ECX
+ 000002AD  68 00000395 R	        push    OFFSET uArray
+ 000002B2  6A 04		        push    TYPE uArray
+ 000002B4  E8 FFFFFF1E		        call    ArrayAt
+ 000002B9  A3 000003B5 R	        mov     helperVar1, EAX
+
+ 000002BE  51			        push    ECX
+ 000002BF  68 000003A5 R	        push    OFFSET solArray
+ 000002C4  6A 04		        push    TYPE solArray
+ 000002C6  E8 FFFFFF0C		        call    ArrayAt
+ 000002CB  8B 1D 000003B5 R	        mov     EBX, helperVar1
+ 000002D1  3B D8		        cmp     EBX, EAX
+ 000002D3  74 02		        JE      isAHit
+ 000002D5  EB 07		        JMP     notAHit
+ 000002D7			        isAHit:
+ 000002D7  83 05 0000038D R	            add hits, 1
+	   01
+
+ 000002DE			        notAHit:
+				            ; ECX => i
+				            ; EBX => j
+ 000002DE  A3 000003B5 R	            mov     helperVar1, EAX
+ 000002E3  8B 1D 0000038D R	            mov     EBX, hits
+ 000002E9			            loop2ndArray:
+ 000002E9  53			                push    EBX
+ 000002EA  68 00000395 R	                push    OFFSET uArray
+ 000002EF  6A 04		                push    TYPE uArray
+ 000002F1  E8 FFFFFEE1		                call    ArrayAt
+ 000002F6  3B 05 000003B5 R	                cmp     EAX, helperVar1
+ 000002FC  74 0A		                JE      isAMatch
+ 000002FE  83 FB 03		                cmp     EBX, 3
+ 00000301  74 0E		                JE      outOfisThisInArray
+ 00000303  83 C3 01		                add     EBX, 1
+ 00000306  EB E1		                JMP     loop2ndArray
+
+ 00000308			            isAMatch:
+ 00000308  83 05 000003B9 R	                add     matches, 1
+	   01
+ 0000030F  EB 00		                JMP     outOfisThisInArray
+
+
+ 00000311			        outOfisThisInArray:
+ 00000311  83 F9 03		            cmp     ECX, 3
+ 00000314  74 05		            JE      outOfPrintuArray
+ 00000316  83 C1 01		            add     ECX, 1
+ 00000319  EB 91		            JMP     PrintuArray
+
+ 0000031B			outOfPrintuArray:
+ 0000031B  8B 5D 08		    mov     EBX, [EBP + 8]
+ 0000031E  A1 0000038D R	    mov     EAX, hits
+ 00000323  89 03		    mov     [EBX], EAX      ; saving to hits variable
+
+ 00000325  A1 000003B9 R	    mov     EAX, matches
+ 0000032A  2B 05 0000038D R	    sub     EAX, hits
+ 00000330  8B 5D 0C		    mov     EBX, [EBP + 12]
+ 00000333  89 03		    mov     [EBX], EAX      ; saving to blows variable
+
+ 00000335  5D			    pop     EBP
+ 00000336  C2 0008		    ret     8
+ 00000339			CheckSimilar ENDP
+
+
+				; -------------------------------------------------------- -
+ 00000339			PrintSolution PROC
+				; Author:           Cameron Kroeker
+				; Description:      Prints the solution pegs into the [xx] spot on the table
+				;
+				; Parameters:
+				;
+				; Preconditions: Must have solution Array filled with at least 4 bytes. Gameboard must be printed before PROC is called.
+				; Postconditions:  Color is set to white, EAX is set to 0.
+				; -------------------------------------------------------- -
+
+ 00000339  BF 00000000		mov EDI, 0              ; Set EDI to 0
+
+				    ; Print the value stored in list[0]
+
+ 0000033E  0F B6 87		movzx EAX, solution[EDI]
+	   00000365 R
+				mPlacePeg       75, 7, EAX
+ 00000345  52		     2	    push        EDX
+ 00000346  B2 4B	     2	    mov         dl, 75
+ 00000348  FE CA	     2	    dec         dl
+ 0000034A  B6 07	     2	    mov         dh, 7
+ 0000034C  FE CE	     2	    dec         dh
+ 0000034E  E8 00000000 E     2	    call        Gotoxy
+ 00000353  5A		     2	    pop         EDX
+ 00000354  50		     1	    push        EAX
+ 00000355  E8 FFFFFE99	     1	    call        SetColorFromPalette
+ 0000035A  52		     2	    push        EDX
+ 0000035B  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000360  E8 00000000 E     2	    call        WriteString
+ 00000365  5A		     2	    pop         EDX
+
+ 00000366  0F B6 87		movzx EAX, solution[EDI+1]
+	   00000366 R
+				mPlacePeg       75, 9, EAX
+ 0000036D  52		     2	    push        EDX
+ 0000036E  B2 4B	     2	    mov         dl, 75
+ 00000370  FE CA	     2	    dec         dl
+ 00000372  B6 09	     2	    mov         dh, 9
+ 00000374  FE CE	     2	    dec         dh
+ 00000376  E8 00000000 E     2	    call        Gotoxy
+ 0000037B  5A		     2	    pop         EDX
+ 0000037C  50		     1	    push        EAX
+ 0000037D  E8 FFFFFE71	     1	    call        SetColorFromPalette
+ 00000382  52		     2	    push        EDX
+ 00000383  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 00000388  E8 00000000 E     2	    call        WriteString
+ 0000038D  5A		     2	    pop         EDX
+
+ 0000038E  0F B6 87		movzx EAX, solution[EDI+2]
+	   00000367 R
+				mPlacePeg       75, 11, EAX
+ 00000395  52		     2	    push        EDX
+ 00000396  B2 4B	     2	    mov         dl, 75
+ 00000398  FE CA	     2	    dec         dl
+ 0000039A  B6 0B	     2	    mov         dh, 11
+ 0000039C  FE CE	     2	    dec         dh
+ 0000039E  E8 00000000 E     2	    call        Gotoxy
+ 000003A3  5A		     2	    pop         EDX
+ 000003A4  50		     1	    push        EAX
+ 000003A5  E8 FFFFFE49	     1	    call        SetColorFromPalette
+ 000003AA  52		     2	    push        EDX
+ 000003AB  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 000003B0  E8 00000000 E     2	    call        WriteString
+ 000003B5  5A		     2	    pop         EDX
+
+ 000003B6  0F B6 87		movzx EAX, solution[EDI+3]
+	   00000368 R
+				mPlacePeg       75, 13, EAX
+ 000003BD  52		     2	    push        EDX
+ 000003BE  B2 4B	     2	    mov         dl, 75
+ 000003C0  FE CA	     2	    dec         dl
+ 000003C2  B6 0D	     2	    mov         dh, 13
+ 000003C4  FE CE	     2	    dec         dh
+ 000003C6  E8 00000000 E     2	    call        Gotoxy
+ 000003CB  5A		     2	    pop         EDX
+ 000003CC  50		     1	    push        EAX
+ 000003CD  E8 FFFFFE21	     1	    call        SetColorFromPalette
+ 000003D2  52		     2	    push        EDX
+ 000003D3  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 000003D8  E8 00000000 E     2	    call        WriteString
+ 000003DD  5A		     2	    pop         EDX
+
+
+				;Set color back to White
+ 000003DE  6A 08		push            8
+ 000003E0  E8 FFFFFE0E		call            SetColorFromPalette
+
+
+ 000003E5  B8 00000000		mov EAX, 0
+ 000003EA  C3			ret
+ 000003EB			PrintSolution ENDP
+
+
+				; -------------------------------------------------------- -
+ 000003EB			GetUserCode PROC
 				; Author:           Brayden Aldrich
 				; Description:      Gets user inputs via arrow keys and the enter key,
 				;                   dynamically displays these choices, then stores desired color
 				;                   into userArray
 				;
-				; Parameters:       push OFFSET array
-				;                   call
-				;                   
-				;                   
+				; Helper Variables: currX, currIndex, userArray
 				;
+				; Parameters:       push OFFSET array
+				;                   call 
+				;                   
 				; Postconditions:   Updated userArray
 				; -------------------------------------------------------- -
- 000002AA  55			push            EBP
- 000002AB  8B EC		mov             EBP, ESP
+ 000003EB  55			push            EBP
+ 000003EC  8B EC		mov             EBP, ESP
 
- 000002AD  50			push            EAX
- 000002AE  53			push            EBX
- 000002AF  51			push            ECX
- 000002B0  52			push            EDX
+ 000003EE  50			push            EAX
+ 000003EF  53			push            EBX
+ 000003F0  51			push            ECX
+ 000003F1  52			push            EDX
 
- 000002B1			_init_variables:
- 000002B1  8B 7D 04		    mov             EDI, [EBP + 4]      ; Array offset 
+ 000003F2			_init_variables:
+ 000003F2  8B 7D 08		    mov             EDI, [EBP + 8]      ; Array offset 
 				    mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be
- 000002B4  B2 01	     1	    mov         dl, 1
- 000002B6  FE CA	     1	    dec         dl
- 000002B8  B6 11	     1	    mov         dh, 17
- 000002BA  FE CE	     1	    dec         dh
- 000002BC  E8 00000000 E     1	    call        Gotoxy
- 000002C1  5A		     1	    pop         EDX
+ 000003F5  52		     1	    push        EDX
+ 000003F6  B2 01	     1	    mov         dl, 1
+ 000003F8  FE CA	     1	    dec         dl
+ 000003FA  B6 11	     1	    mov         dh, 17
+ 000003FC  FE CE	     1	    dec         dh
+ 000003FE  E8 00000000 E     1	    call        Gotoxy
+ 00000403  5A		     1	    pop         EDX
 				                                        ; displayed.
- 000002C2			_string:
+ 00000404			_string:
 				    mPrint          selectColor
- 000002C2  52		     1	    push        EDX
- 000002C3  BA 00000318 R     1	    mov         EDX, OFFSET selectColor
- 000002C8  E8 00000000 E     1	    call        WriteString
- 000002CD  5A		     1	    pop         EDX
+ 00000404  52		     1	    push        EDX
+ 00000405  BA 00000318 R     1	    mov         EDX, OFFSET selectColor
+ 0000040A  E8 00000000 E     1	    call        WriteString
+ 0000040F  5A		     1	    pop         EDX
 
-				mGotoXY         1, 19                   ; Move cursor to (1, 19). This is where user will see their current choice
- 000002CE  B2 01	     1	    mov         dl, 1
- 000002D0  FE CA	     1	    dec         dl
- 000002D2  B6 13	     1	    mov         dh, 19
- 000002D4  FE CE	     1	    dec         dh
- 000002D6  E8 00000000 E     1	    call        Gotoxy
- 000002DB  5A		     1	    pop         EDX
+				                  
+
+				; Initialize the screen and ECX to show a color before the user hits the arrow keys. 
+ 00000410			_preloop:
+ 00000410  A1 00000411 R	mov             EAX, currX              ; init current x
+ 00000415  8B 1D 00000415 R	mov             EBX, currY              ; init current y
+ 0000041B  B9 00000000		mov             ECX, 0                  ; init red color
+				mPlacePeg       al, bl, 0               ; place peg on coordinate
+ 00000420  52		     2	    push        EDX
+ 00000421  8A D0	     2	    mov         dl, al
+ 00000423  FE CA	     2	    dec         dl
+ 00000425  8A F3	     2	    mov         dh, bl
+ 00000427  FE CE	     2	    dec         dh
+ 00000429  E8 00000000 E     2	    call        Gotoxy
+ 0000042E  5A		     2	    pop         EDX
+ 0000042F  6A 00	     1	    push        0
+ 00000431  E8 FFFFFDBD	     1	    call        SetColorFromPalette
+ 00000436  52		     2	    push        EDX
+ 00000437  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 0000043C  E8 00000000 E     2	    call        WriteString
+ 00000441  5A		     2	    pop         EDX
 
 				;  loop until user inputs a code
- 000002DC			_loop:
- 000002DC  B8 00000032		    mov             EAX, 50
- 000002E1  E8 00000000 E	    call            Delay
- 000002E6  E8 00000000 E	    call            ReadKey
- 000002EB  74 EF		    jz              _loop
+ 00000442			_loop:
+ 00000442  B8 00000032		    mov             EAX, 50
+ 00000447  E8 00000000 E	    call            Delay
+ 0000044C  E8 00000000 E	    call            ReadKey
+ 00000451  74 EF		    jz              _loop
 
- 000002ED  0F B7 D2		movzx           EDX, DX                 ; move key press code to edx
+ 00000453  0F B7 D2		movzx           EDX, DX                 ; move key press code to edx
+ 00000456  83 FA 25		cmp             EDX, 37                 ; left
+ 00000459  74 66		je              _decrease
 
- 000002F0  83 FA 25		cmp             EDX, 37                 ; left
- 000002F3  74 4A		je              _decrease
- 000002F5  83 FA 28		cmp             EDX, 40                 ; down
- 000002F8  74 45		je              _decrease
 
- 000002FA  83 FA 26		cmp             EDX, 38                 ; up
- 000002FD  74 0A		je              _increase
- 000002FF  83 FA 27		cmp             EDX, 39                 ; right
- 00000302  74 05		je              _increase
 
- 00000304  83 FA 0D		cmp             EDX, 13                 ; enter
- 00000307  74 6F		je              _enter
+ 0000045B  83 FA 27		cmp             EDX, 39                 ; right
+ 0000045E  74 24		je              _increase
 
- 00000309			_increase:
+ 00000460  83 FA 0D		cmp             EDX, 13                 ; enter
+ 00000463  0F 84 00000098	je              _enter
 
- 00000309  83 C1 01		add             ECX, 1                  ; increment color map
- 0000030C  83 F9 08		cmp             ECX, 8                  ; check if current index is too high
- 0000030F  7D 02		jge             _resetHigh
- 00000311  EB 05		jmp             _getColorHigh   
+ 00000469  83 FA 28		cmp             EDX, 40                 ; down
+ 0000046C  0F 84 0000008F	je              _enter
 
- 00000313			    _resetHigh: 
- 00000313  B9 00000000		    mov             ECX, 0              ; reset the color map to 0
- 00000318			    _getColorHigh:
- 00000318  A1 00000399 R	    mov             EAX, currX          ; move the current x index into EAX so
-				    mPlacePeg       al, 19, ECX         ; mPlacePeg can use AL. Index will not reach AH 
- 0000031D  8A D0	     2	    mov         dl, al
- 0000031F  FE CA	     2	    dec         dl
- 00000321  B6 13	     2	    mov         dh, 19
- 00000323  FE CE	     2	    dec         dh
- 00000325  E8 00000000 E     2	    call        Gotoxy
- 0000032A  5A		     2	    pop         EDX
- 0000032B  51		     1	    push        ECX
- 0000032C  E8 FFFFFEA9	     1	    call        SetColorFromPalette
- 00000331  52		     2	    push        EDX
- 00000332  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
- 00000337  E8 00000000 E     2	    call        WriteString
- 0000033C  5A		     2	    pop         EDX
+ 00000472  83 FA 26		cmp             EDX, 38                 ; up
+ 00000475  0F 84 000000AC	je              _up
+
+ 0000047B  83 FA 08		cmp             EDX, 8                  ; backspace
+ 0000047E  0F 84 000000A3	je              _up
+
+ 00000484			_increase:
+
+ 00000484  83 C1 01		add             ECX, 1                  ; increment color map
+ 00000487  83 F9 08		cmp             ECX, 8                  ; check if current index is too high
+ 0000048A  7D 02		jge             _resetHigh
+ 0000048C  EB 05		jmp             _getColorHigh   
+
+ 0000048E			    _resetHigh: 
+ 0000048E  B9 00000000		    mov             ECX, 0              ; reset the color map to 0
+ 00000493			    _getColorHigh:
+ 00000493  A1 00000411 R	    mov             EAX, currX          ; move the current x index into EAX so mPlacePeg can use AL 
+ 00000498  8B 1D 00000415 R	    mov             EBX, currY          ; move current y index into EBX so mPlacePeg can use BL
+				    mPlacePeg       al, bl, ECX         
+ 0000049E  52		     2	    push        EDX
+ 0000049F  8A D0	     2	    mov         dl, al
+ 000004A1  FE CA	     2	    dec         dl
+ 000004A3  8A F3	     2	    mov         dh, bl
+ 000004A5  FE CE	     2	    dec         dh
+ 000004A7  E8 00000000 E     2	    call        Gotoxy
+ 000004AC  5A		     2	    pop         EDX
+ 000004AD  51		     1	    push        ECX
+ 000004AE  E8 FFFFFD40	     1	    call        SetColorFromPalette
+ 000004B3  52		     2	    push        EDX
+ 000004B4  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 000004B9  E8 00000000 E     2	    call        WriteString
+ 000004BE  5A		     2	    pop         EDX
 				                                        ; ^ User's previous choices are displayed (currX, 19)
- 0000033D  EB 9D		jmp             _loop                   ; Loop until a new key press
+ 000004BF  EB 81		jmp             _loop                   ; Loop until a new key press
 
- 0000033F			_decrease:
+ 000004C1			_decrease:
 
- 0000033F  83 F9 00		cmp             ECX, 0
- 00000342  74 05		je              _resetLow
- 00000344  83 E9 01		sub             ECX, 1
- 00000347  EB 05		jmp             _getColorLow
- 00000349			    _resetLow:
- 00000349  B9 00000007		    mov             ECX, 7              ; reset color to 7, looping to the top of the array
- 0000034E			    _getColorLow:
- 0000034E  A1 00000399 R	    mov             EAX, currX          ; move current x index into EAX so it can be used in
-				    mPlacePeg       al, 19, ECX         ; mPlacePeg
- 00000353  8A D0	     2	    mov         dl, al
- 00000355  FE CA	     2	    dec         dl
- 00000357  B6 13	     2	    mov         dh, 19
- 00000359  FE CE	     2	    dec         dh
- 0000035B  E8 00000000 E     2	    call        Gotoxy
- 00000360  5A		     2	    pop         EDX
- 00000361  51		     1	    push        ECX
- 00000362  E8 FFFFFE73	     1	    call        SetColorFromPalette
- 00000367  52		     2	    push        EDX
- 00000368  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
- 0000036D  E8 00000000 E     2	    call        WriteString
- 00000372  5A		     2	    pop         EDX
+ 000004C1  83 F9 00		cmp             ECX, 0
+ 000004C4  74 05		je              _resetLow
+ 000004C6  83 E9 01		sub             ECX, 1
+ 000004C9  EB 05		jmp             _getColorLow
+ 000004CB			    _resetLow:
+ 000004CB  B9 00000007		    mov             ECX, 7              ; reset color to 7, looping to the top of the array
+ 000004D0			    _getColorLow:
+ 000004D0  A1 00000411 R	    mov             EAX, currX          ; move current x index into EAX so it can be used in mPlacePeg
+ 000004D5  8B 1D 00000415 R	    mov             EBX, currY          ; move current y index to EBX to be used in mPlacePeg
+				    mPlacePeg       al, bl, ECX         
+ 000004DB  52		     2	    push        EDX
+ 000004DC  8A D0	     2	    mov         dl, al
+ 000004DE  FE CA	     2	    dec         dl
+ 000004E0  8A F3	     2	    mov         dh, bl
+ 000004E2  FE CE	     2	    dec         dh
+ 000004E4  E8 00000000 E     2	    call        Gotoxy
+ 000004E9  5A		     2	    pop         EDX
+ 000004EA  51		     1	    push        ECX
+ 000004EB  E8 FFFFFD03	     1	    call        SetColorFromPalette
+ 000004F0  52		     2	    push        EDX
+ 000004F1  BA 0000029E R     2	    mov         EDX, OFFSET GUI_gameboard_pegs
+ 000004F6  E8 00000000 E     2	    call        WriteString
+ 000004FB  5A		     2	    pop         EDX
 				                                        ; ^ User's previous choices are displayed (currX, 19)
- 00000373  E9 FFFFFF64		jmp             _loop                   ; Loop until a new key press
+ 000004FC  E9 FFFFFF41		jmp             _loop                   ; Loop until a new key press
 
- 00000378			_enter:
- 00000378  FF 05 0000039D R	inc             currIndex               ; increment current index in userArray
- 0000037E  83 3D 0000039D R	cmp             currIndex, 4            ; check to see if it's over array limit
+ 00000501			_enter:
+ 00000501  89 0F		mov             [EDI], ECX              ; add color number into current index         
+ 00000503  83 C7 04		add             EDI, 4                  ; increment current index
+ 00000506  A1 00000415 R	mov             EAX, currY              ; move current y coordinate into eax
+ 0000050B  83 C0 02		add             EAX, 2                  ; incease it by 2
+ 0000050E  A3 00000415 R	mov             currY, EAX              ; store updated currY
+ 00000513  FF 05 00000419 R	inc             currIndex               ; increment current index in userArray
+ 00000519  83 3D 00000419 R	cmp             currIndex, 4            ; check to see if it's over array limit
 	   04
- 00000385  7D 17		jge             _end
- 00000387  89 0F		mov             [EDI], ECX              ; add color number into current index    
- 00000389  83 C7 04		add             EDI, 4                  ; increment current index
- 0000038C  A1 00000399 R	mov             EAX, currX              ; move current x coordinate into eax
- 00000391  83 C0 05		add             EAX, 5                  ; incease it by 5
- 00000394  A3 00000399 R	mov             currX, EAX              ; store updated currX
- 00000399  E9 FFFFFF3E		jmp             _loop                   ; loop to get a new number
+ 00000520  7D 30		jge             _end
+ 00000522  E9 FFFFFEE9		jmp             _preloop                ; loop to get a new number
+
+ 00000527			_up:
+ 00000527  A1 00000415 R	    mov         EAX, currY              
+ 0000052C  83 F8 07		    cmp         EAX, 7                  ; compare current y coord with 7. If it's 7, just go back to looping.
+ 0000052F  0F 84 FFFFFF0D	    je          _loop                   
+ 00000535  83 E8 02		    sub         EAX, 2                  ; subtract 2 from currY to get to peg above currY
+ 00000538  A3 00000415 R	    mov         currY, EAX
+ 0000053D  83 EF 04		    sub         EDI, 4                  ; move array pointer back to previous entry
+ 00000540  A1 00000419 R	    mov         EAX, currIndex          
+ 00000545  83 E8 01		    sub         EAX, 1                  ; subtract 1 from currIndex
+ 00000548  A3 00000419 R	    mov         currIndex, EAX          
+ 0000054D  E9 FFFFFEBE		    jmp         _preloop                ; go to preloop
 
 
- 0000039E			_end:                                   ; break out of loop and return
+ 00000552			_end:                                   ; break out of loop and return
+ 00000552  6A 08		push            8
+ 00000554  E8 FFFFFC9A		call            SetColorFromPalette     ; set color back to white
 
- 0000039E  5A			pop            EDX
- 0000039F  59			pop            ECX
- 000003A0  5B			pop            EBX
- 000003A1  58			pop            EAX
- 000003A2  5D			pop            EBP
- 000003A3  C2 0004		ret 4
- 000003A6			GetUserCode ENDP
+ 00000559  C7 05 00000415 R	mov             currY, 7                ; reset currY for next round
+	   00000007
+ 00000563  A1 00000411 R	mov             EAX, currX              ; set currX to currX + 8 to get next round x coordinate
+ 00000568  83 C0 08		add             EAX, 8
+
+ 0000056B  5A			pop             EDX
+ 0000056C  59			pop             ECX
+ 0000056D  5B			pop             EBX
+ 0000056E  58			pop             EAX
+ 0000056F  5D			pop             EBP
+ 00000570  C2 0004		ret 4
+ 00000573			GetUserCode ENDP
+
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 13:54:31
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/07/23 15:56:45
 Mastermind			(AddTwo.asm		     Symbols 2 - 1
 
 
@@ -1061,6 +1318,7 @@ Macros:
 mArand . . . . . . . . . . . . .	Proc
 mArrayFlatten  . . . . . . . . .	Proc
 mGotoXY  . . . . . . . . . . . .	Proc
+mIsArrayElementEqual . . . . . .	Proc
 mPlaceFeedback . . . . . . . . .	Proc
 mPlacePeg  . . . . . . . . . . .	Proc
 mPrint . . . . . . . . . . . . .	Proc
@@ -1154,17 +1412,24 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 000003A1 Para	  Public  'DATA'	
-_TEXT  . . . . . . . . . . . . .	32 Bit	 000003A6 Para	  Public  'CODE'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000041D Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000573 Para	  Public  'CODE'	
 
 
 Procedures, parameters, and locals:
 
                 N a m e                 Type     Value    Attr
 
-ArrayAt  . . . . . . . . . . . .	P Near	 000001BE _TEXT	Length= 0000001C Public STDCALL
-  _stackFrame  . . . . . . . . .	L Near	 000001C4 _TEXT	
-CheckSimilar . . . . . . . . . .	P Near	 00000232 _TEXT	Length= 00000001 Public STDCALL
+ArrayAt  . . . . . . . . . . . .	P Near	 000001D7 _TEXT	Length= 0000001C Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 000001DD _TEXT	
+CheckSimilar . . . . . . . . . .	P Near	 000002A4 _TEXT	Length= 00000095 Public STDCALL
+  PrintuArray  . . . . . . . . .	L Near	 000002AC _TEXT	
+  isAHit . . . . . . . . . . . .	L Near	 000002D7 _TEXT	
+  notAHit  . . . . . . . . . . .	L Near	 000002DE _TEXT	
+  loop2ndArray . . . . . . . . .	L Near	 000002E9 _TEXT	
+  isAMatch . . . . . . . . . . .	L Near	 00000308 _TEXT	
+  outOfisThisInArray . . . . . .	L Near	 00000311 _TEXT	
+  outOfPrintuArray . . . . . . .	L Near	 0000031B _TEXT	
 CloseFile  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 CloseHandle  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Clrscr . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1172,8 +1437,8 @@ CreateFileA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 CreateOutputFile . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Crlf . . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Delay  . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-DrawNewGameboard . . . . . . . .	P Near	 000000ED _TEXT	Length= 00000087 Public STDCALL
-  _printPlayArea . . . . . . . .	L Near	 00000134 _TEXT	
+DrawNewGameboard . . . . . . . .	P Near	 00000106 _TEXT	Length= 00000087 Public STDCALL
+  _printPlayArea . . . . . . . .	L Near	 0000014D _TEXT	
 DumpMem  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 DumpRegs . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ExitProcess  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1181,10 +1446,10 @@ FileTimeToDosDateTime  . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 FileTimeToSystemTime . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 FlushConsoleInputBuffer  . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 FormatMessageA . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-GenerateCode . . . . . . . . . .	P Near	 00000174 _TEXT	Length= 0000004A Public STDCALL
-  _stackFrame  . . . . . . . . .	L Near	 0000017B _TEXT	
-  _generateCode  . . . . . . . .	L Near	 00000189 _TEXT	
-  _allowDuplicates . . . . . . .	L Near	 000001AF _TEXT	
+GenerateCode . . . . . . . . . .	P Near	 0000018D _TEXT	Length= 0000004A Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 00000194 _TEXT	
+  _generateCode  . . . . . . . .	L Near	 000001A2 _TEXT	
+  _allowDuplicates . . . . . . .	L Near	 000001C8 _TEXT	
 GetCommandLineA  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetCommandTail . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetConsoleCP . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1204,18 +1469,20 @@ GetStdHandle . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 GetSystemTime  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetTextColor . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 GetTickCount . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-GetUserCode  . . . . . . . . . .	P Near	 000002AA _TEXT	Length= 000000FC Public STDCALL
-  _init_variables  . . . . . . .	L Near	 000002B1 _TEXT	
-  _string  . . . . . . . . . . .	L Near	 000002C2 _TEXT	
-  _loop  . . . . . . . . . . . .	L Near	 000002DC _TEXT	
-  _increase  . . . . . . . . . .	L Near	 00000309 _TEXT	
-  _resetHigh . . . . . . . . . .	L Near	 00000313 _TEXT	
-  _getColorHigh  . . . . . . . .	L Near	 00000318 _TEXT	
-  _decrease  . . . . . . . . . .	L Near	 0000033F _TEXT	
-  _resetLow  . . . . . . . . . .	L Near	 00000349 _TEXT	
-  _getColorLow . . . . . . . . .	L Near	 0000034E _TEXT	
-  _enter . . . . . . . . . . . .	L Near	 00000378 _TEXT	
-  _end . . . . . . . . . . . . .	L Near	 0000039E _TEXT	
+GetUserCode  . . . . . . . . . .	P Near	 000003EB _TEXT	Length= 00000188 Public STDCALL
+  _init_variables  . . . . . . .	L Near	 000003F2 _TEXT	
+  _string  . . . . . . . . . . .	L Near	 00000404 _TEXT	
+  _preloop . . . . . . . . . . .	L Near	 00000410 _TEXT	
+  _loop  . . . . . . . . . . . .	L Near	 00000442 _TEXT	
+  _increase  . . . . . . . . . .	L Near	 00000484 _TEXT	
+  _resetHigh . . . . . . . . . .	L Near	 0000048E _TEXT	
+  _getColorHigh  . . . . . . . .	L Near	 00000493 _TEXT	
+  _decrease  . . . . . . . . . .	L Near	 000004C1 _TEXT	
+  _resetLow  . . . . . . . . . .	L Near	 000004CB _TEXT	
+  _getColorLow . . . . . . . . .	L Near	 000004D0 _TEXT	
+  _enter . . . . . . . . . . . .	L Near	 00000501 _TEXT	
+  _up  . . . . . . . . . . . . .	L Near	 00000527 _TEXT	
+  _end . . . . . . . . . . . . .	L Near	 00000552 _TEXT	
 Gotoxy . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapAlloc  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapCreate . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1223,8 +1490,6 @@ HeapDestroy  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 HeapFree . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 HeapSize . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 IsDigit  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-ListenUser . . . . . . . . . . .	P Near	 00000214 _TEXT	Length= 0000001E Public STDCALL
-  askUser  . . . . . . . . . . .	L Near	 00000220 _TEXT	
 LocalFree  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MessageBoxA  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 MsgBoxAsk  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1233,13 +1498,14 @@ OpenInputFile  . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ParseDecimal32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ParseInteger32 . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 PeekConsoleInputA  . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-PlaceFeedback  . . . . . . . . .	P Near	 00000233 _TEXT	Length= 00000077 Public STDCALL
-  _stackFrame  . . . . . . . . .	L Near	 0000023A _TEXT	
-  _moveCursor  . . . . . . . . .	L Near	 00000243 _TEXT	
-  _miss  . . . . . . . . . . . .	L Near	 00000263 _TEXT	
-  _blow  . . . . . . . . . . . .	L Near	 00000278 _TEXT	
-  _hit . . . . . . . . . . . . .	L Near	 0000028D _TEXT	
-  _done  . . . . . . . . . . . .	L Near	 000002A2 _TEXT	
+PlaceFeedback  . . . . . . . . .	P Near	 0000022D _TEXT	Length= 00000077 Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 00000234 _TEXT	
+  _moveCursor  . . . . . . . . .	L Near	 0000023D _TEXT	
+  _miss  . . . . . . . . . . . .	L Near	 0000025D _TEXT	
+  _blow  . . . . . . . . . . . .	L Near	 00000272 _TEXT	
+  _hit . . . . . . . . . . . . .	L Near	 00000287 _TEXT	
+  _done  . . . . . . . . . . . .	L Near	 0000029C _TEXT	
+PrintSolution  . . . . . . . . .	P Near	 00000339 _TEXT	Length= 000000B2 Public STDCALL
 Random32 . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 RandomRange  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 Randomize  . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1255,8 +1521,8 @@ ReadInt  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 ReadKeyFlush . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadKey  . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 ReadString . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-SetColorFromPalette  . . . . . .	P Near	 000001DA _TEXT	Length= 0000003A Public STDCALL
-  _stackFrame  . . . . . . . . .	L Near	 000001E0 _TEXT	
+SetColorFromPalette  . . . . . .	P Near	 000001F3 _TEXT	Length= 0000003A Public STDCALL
+  _stackFrame  . . . . . . . . .	L Near	 000001F9 _TEXT	
 SetConsoleCursorInfo . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleCursorPosition . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 SetConsoleMode . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
@@ -1294,7 +1560,7 @@ WriteStackFrame  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External
 WriteString  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteToFile  . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
 WriteWindowsMsg  . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External STDCALL
-main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 000000ED Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000106 Public STDCALL
   setup  . . . . . . . . . . . .	L Near	 00000000 _TEXT	
   gameplay . . . . . . . . . . .	L Near	 0000000F _TEXT	
 printf . . . . . . . . . . . . .	P Near	 00000000 FLAT	Length= 00000000 External C
@@ -1541,10 +1807,12 @@ WINDOW_BUFFER_SIZE_EVENT . . . .	Number	 00000004h
 WriteConsoleOutputCharacter  . .	Text   	 WriteConsoleOutputCharacterA
 WriteConsole . . . . . . . . . .	Text   	 WriteConsoleA
 black  . . . . . . . . . . . . .	Number	 00000000h   
+blows  . . . . . . . . . . . . .	DWord	 00000391 _DATA	
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-currIndex  . . . . . . . . . . .	DWord	 0000039D _DATA	
-currX  . . . . . . . . . . . . .	DWord	 00000399 _DATA	
+currIndex  . . . . . . . . . . .	DWord	 00000419 _DATA	
+currX  . . . . . . . . . . . . .	DWord	 00000411 _DATA	
+currY  . . . . . . . . . . . . .	DWord	 00000415 _DATA	
 current_round  . . . . . . . . .	Byte	 00000364 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
@@ -1552,6 +1820,8 @@ game_matrix  . . . . . . . . . .	Byte	 00000369 _DATA
 gray . . . . . . . . . . . . . .	Number	 00000008h   
 green  . . . . . . . . . . . . .	Number	 00000002h   
 greeting . . . . . . . . . . . .	Byte	 000002FF _DATA	
+helperVar1 . . . . . . . . . . .	DWord	 000003B5 _DATA	
+hits . . . . . . . . . . . . . .	DWord	 0000038D _DATA	
 lightBlue  . . . . . . . . . . .	Number	 00000009h   
 lightCyan  . . . . . . . . . . .	Number	 0000000Bh   
 lightGray  . . . . . . . . . . .	Number	 00000007h   
@@ -1559,10 +1829,20 @@ lightGreen . . . . . . . . . . .	Number	 0000000Ah
 lightMagenta . . . . . . . . . .	Number	 0000000Dh   
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
+matches  . . . . . . . . . . . .	DWord	 000003B9 _DATA	
+msgHh1 . . . . . . . . . . . . .	Byte	 000003BD _DATA	
+msgHh2 . . . . . . . . . . . . .	Byte	 000003CF _DATA	
+msgHh3 . . . . . . . . . . . . .	Byte	 000003DC _DATA	
+msgHh4 . . . . . . . . . . . . .	Byte	 000003EE _DATA	
+msgHh5 . . . . . . . . . . . . .	Byte	 000003F6 _DATA	
+msgSpace . . . . . . . . . . . .	Byte	 000003FF _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 selectColor  . . . . . . . . . .	Byte	 00000318 _DATA	
+solArray . . . . . . . . . . . .	DWord	 000003A5 _DATA	
 solution . . . . . . . . . . . .	Byte	 00000365 _DATA	
-userArray  . . . . . . . . . . .	DWord	 00000389 _DATA	
+uArray . . . . . . . . . . . . .	DWord	 00000395 _DATA	
+userArray  . . . . . . . . . . .	DWord	 00000401 _DATA	
+user_guess . . . . . . . . . . .	Byte	 00000389 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA
 yellow . . . . . . . . . . . . .	Number	 0000000Eh   
