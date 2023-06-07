@@ -108,6 +108,8 @@ mGotoXY         MACRO _x, _y
 ; Use:          Pass an X and Y value (0-indexed) to move
 ;               the cursor
 ; --------------------------------------------------------
+    push        EDX
+
     mov         dl, _x
     dec         dl
     mov         dh, _y
@@ -183,7 +185,21 @@ current_round               BYTE        0
 solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
-userArray                   DWORD       4 DUP(?)
+; Hits and Blows            hits and blows will be stored in these variables
+hits                        DWORD       ?
+blows                       DWORD       ?
+uArray                      DWORD       5, 10, 1, 2       ; user guesses
+solArray                    DWORD       10, 5, 2, 1       ; peg positions?
+helperVar1                  DWORD       ?
+matches                     DWORD       ?                 ; inverse of blows
+
+; Hits and Blows temporary helper variables   - feel free to delete after
+msgHh1                      BYTE        "Comparing arrays", LF, 0
+msgHh2                      BYTE        "User array: ", 0
+msgHh3                      BYTE        LF, "Solution array: ", 0
+msgHh4                      BYTE        LF, "hits: ", 0
+msgHh5                      BYTE        LF, "blows: ", 0
+msgSpace                    BYTE        " ", 0
 .code
 main PROC; (insert executable instructions here)
 
@@ -222,16 +238,20 @@ push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
 
-push            OFFSET userArray
-call            ListenUser
-call            CheckSimilar
 
 ; End of program steps
 mGotoXY         1, 20
 
 push            8
 call            SetColorFromPalette
-exit                                    ; exit to operating system
+
+; comparing uArray and solArray - updates hits and blows
+push            OFFSET solArray
+push            OFFSET uArray
+push            blows
+push            hits
+call            CheckSimilar
+invoke EXITProcess, 0		; exit to operating system
 main ENDP
 
 ; (insert additional procedures here)
@@ -334,7 +354,6 @@ pop         EBP
 ret         12
 GenerateCode ENDP
 
-
 ; -------------------------------------------------------- -
 ArrayAt PROC
 ; Author:           Trenton Young
@@ -372,7 +391,6 @@ pop                 EBP
 
 ret 12
 ArrayAt ENDP
-
 
 ; -------------------------------------------------------- -
 SetColorFromPalette PROC
@@ -429,6 +447,95 @@ pop                 EBP
 ret 4
 SetColorFromPalette ENDP
 
+; --------------------------------------------------------
+PlaceFeedback PROC
+; Author:       Trenton Young
+; Description:  Draws a feedback peg at the specified location.
+;               Pass an X and Y value (0-indexed) and a number
+;               coinciding with the level of feedback
+;               - 0: miss
+;               - 1: blow
+;               - 2: hit
+;
+; Parameters:   PUSH x
+;               PUSH y
+;               PUSH feedback
+;               call
+;
+; --------------------------------------------------------
+push            EBP
+mov             EBP, ESP
+
+push            EAX
+push            EBX
+push            ECX
+push            EDX
+
+_stackFrame:
+    mov         ECX, [EBP + 16]         ; x
+    mov         EBX, [EBP + 12]         ; y
+    mov         EAX, [EBP + 8]          ; feedback
+
+_moveCursor:
+    push        EAX
+
+    mov         EAX, EBX                ; insert y
+    dec         EAX                     ; shift back for 1-indexing
+    mov         EBX, 256
+    mul         EBX                     ; shift y to subregister AH
+
+    add         EAX, ECX                ; insert x to subregister AL
+    dec         EAX                     ; shift back for 1-indexing
+
+    mov         EDX, EAX                ; move y to DH, x to DL
+
+    call        GotoXY
+    pop         EAX
+
+cmp             EAX, HIT
+je              _hit
+
+cmp             EAX, BLOW
+je              _blow
+
+_miss:
+    push        8
+    call        SetColorFromPalette
+    mPrint      GUI_feedback_miss
+    jmp         _done
+_blow:
+    push        9
+    call        SetColorFromPalette
+    mPrint      GUI_feedback_blow
+    jmp         _done
+_hit:
+    push        10
+    call        SetColorFromPalette
+    mPrint      GUI_feedback_hit
+    jmp         _done
+
+_done:
+
+pop             EDX
+pop             ECX
+pop             EBX
+pop             EAX
+
+pop             EBP
+
+ret 12
+PlaceFeedback ENDP
+
+
+
+
+
+
+
+
+
+
+
 ; -------------------------------------------------------- -
 ListenUser PROC
 ; Author:           Hla Htun
@@ -468,25 +575,103 @@ ListenUser ENDP
 ; -------------------------------------------------------- -
 CheckSimilar PROC
 ; Author:           Hla Htun
-; Description:      Takes in two arrays. Counts the number of
-;                   indices with identical values between arrays (i.e. hits)
+; Description:      Takes in two arrays along with 'hits' and 'blows' variable.
+;                   Counts the number of indices with identical values between
+;                   arrays (i.e. hits)
 ;                   Next, counts the number of values shared between arrays
 ;                   subtracts hits from blows and returns each value
+;                   Finally updates the hits and blows variables
 ;
 ; Parameters:
-;                   push OFFSET solArray
-;                   push TYPE solArray
-;                   push OFFSET userArray
-;                   push TYPE userArray
+;                   push OFFSET solArray        [20]
+;                   push OFFSET uArray          [16]
+;                   push blows                  [12]
+;                   push hits                   [8]
 ;                   call
-; Postconditions:   Returns the number of hits and blows, i.e. ret hits, blows
+; Postconditions:   Returns the number of hits and blows
 ; -------------------------------------------------------- -
-    ;push    EBP
-    ;push    EBP, ESP
+    push    EBP
+    mPrint msgHh1
+    mPrint msgHh2
+
+    mov     ECX, 0
+    PrintuArray:
+        push ECX
+        push OFFSET uArray
+        push TYPE uArray
+        call ArrayAt
+        call WriteDec
+        mov helperVar1, EAX
+        mPrint msgSpace
+
+        push ECX
+        push OFFSET solArray
+        push TYPE solArray
+        call ArrayAt
+        mov EBX, helperVar1
+        cmp EBX, EAX
+        JE isAHit
+        JMP notAHit
+        isAHit:
+            add hits, 1
+
+        notAHit:
+            ; ECX => i
+            ; EBX => j
+            mov EBX, 0
+            loop2ndArray:
+                push EBX
+                push OFFSET solArray
+                push TYPE solArray
+                call ArrayAt
+                cmp EAX, helperVar1
+                JE isAMatch
+                cmp EBX, 3
+                JE outOfisThisInArray
+                add EBX, 1
+                JMP loop2ndArray
+
+            isAMatch:
+                add matches, 1
+                JMP outOfisThisInArray
 
 
+        outOfisThisInArray:
+            cmp ECX, 3
+            JE outOfPrintuArray
+            add ECX, 1
+            JMP PrintuArray
 
-    ;pop     EBP
+outOfPrintuArray:
+
+    mPrint msgHh3
+
+    mov     ECX, 0
+    PrintsolArray:
+            push ECX
+            push OFFSET solArray
+            push TYPE solArray
+            call ArrayAt
+            call WriteDec
+            mPrint msgSpace
+            cmp ECX, 3
+            JE outOfPrintsolArray
+            add ECX, 1
+            JMP PrintsolArray
+
+outOfPrintsolArray:
+    mPrint msgHh4
+
+    ; update hits
+    mov EAX, hits
+    call WriteDec
+
+    mPrint msgHh5
+
+    mov EAX, matches
+    call WriteDec
+
+    pop     EBP
     ret
 CheckSimilar ENDP
 
