@@ -497,42 +497,6 @@ pop                 EBP
 ret 4
 SetColorFromPalette ENDP
 
-; -------------------------------------------------------- -
-ListenUser PROC
-; Author:           Hla Htun
-; Description:      Takes in 4 user input and stores it in the array
-;
-; Parameters:
-;                   push OFFSET userArray
-;                   push TYPE userArray
-;                   call
-; Preconditions:    An array as a parameter to store the 4 user inputs
-; Postconditions:   None. The array passed will be updated with the user input
-; -------------------------------------------------------- -
-    ; call readDec
-    ; store to array
-
-    ; loop until 4
-    push EBP
-    mov EBP, ESP
-    pushad
-
-
-    mov EDI, [EBP+8]
-    mov ECX, 4
-    askUser:
-        call ReadInt
-        mov [EDI], EAX
-        cmp ECX, 0
-;        JE outOfAskUser    TODO there is no such label in this version - Trenton Young
-        sub ECX, 1
-        JMP askUser
-
-    popad
-    pop EBP
-    ret
-ListenUser ENDP
-
 ; --------------------------------------------------------
 PlaceFeedback PROC
 ; Author:       Trenton Young
