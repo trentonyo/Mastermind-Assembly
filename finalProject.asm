@@ -599,7 +599,7 @@ PlaceFeedback ENDP
 
 ; -------------------------------------------------------- -
 CheckSimilar PROC
-; Author:           Hla Htun
+; Author:           Hla Htun (Trenton Young made small contribution)
 ; Description:      Uses two arrays along with 'hits' and 'blows' variable.
 ;                   Counts the number of indices with identical values between
 ;                   arrays (i.e. hits)
@@ -621,6 +621,10 @@ CheckSimilar PROC
 ; -------------------------------------------------------- -
     push    EBP
     mov     EBP, ESP
+
+    push    EAX
+    push    EBX
+    push    ECX
 
     mov     ECX, 0
     PrintuArray:
@@ -679,6 +683,10 @@ outOfPrintuArray:
     mov     EBX, [EBP + 12]
     mov     [EBX], EAX      ; saving to blows variable
 
+    pop     ECX
+    pop     EBX
+    pop     EAX
+
     pop     EBP
     ret     8
 CheckSimilar ENDP
@@ -686,7 +694,7 @@ CheckSimilar ENDP
 
 ; -------------------------------------------------------- -
 PrintSolution PROC
-; Author:           Cameron Kroeker
+; Author:           Cameron Kroeker (Trenton Young made small contribution)
 ; Description:      Prints the solution pegs into the [xx] spot on the table
 ;
 ; Parameters:
@@ -694,6 +702,8 @@ PrintSolution PROC
 ; Preconditions: Must have solution Array filled with at least 4 bytes. Gameboard must be printed before PROC is called.
 ; Postconditions:  Color is set to white, EAX is set to 0.
 ; -------------------------------------------------------- -
+push    EAX
+push    EDI
 
 mov EDI, 0              ; Set EDI to 0
 
@@ -718,6 +728,10 @@ call            SetColorFromPalette
 
 
 mov EAX, 0
+
+pop     EDI
+pop     EAX
+
 ret
 PrintSolution ENDP
 
