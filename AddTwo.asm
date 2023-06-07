@@ -512,15 +512,15 @@ PlaceFeedback ENDP
 ; -------------------------------------------------------- -
 PrintSolution PROC
 ; Author:           Cameron Kroeker
-; Description:      Prints the solution
+; Description:      Prints the solution pegs into the [xx] spot on the table
 ;
 ; Parameters:       
 ;
-; Preconditions:    
-; Postconditions:   
+; Preconditions: Must have solution Array filled with at least 4 bytes. Gameboard must be printed before PROC is called.
+; Postconditions:  Color is set to white, EAX is set to 0. 
 ; -------------------------------------------------------- -
 
-    mov EDI, 0              ; Set EDI to 0
+mov EDI, 0              ; Set EDI to 0
 
     ; Print the value stored in list[0]
    
