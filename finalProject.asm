@@ -675,16 +675,16 @@ mov EDI, 0              ; Set EDI to 0
     ; Print the value stored in list[0]
 
 movzx EAX, solution[EDI]
-mPlacePeg       59, 7, EAX
+mPlacePeg       75, 7, EAX
 
 movzx EAX, solution[EDI+1]
-mPlacePeg       59, 9, EAX
+mPlacePeg       75, 9, EAX
 
 movzx EAX, solution[EDI+2]
-mPlacePeg       59, 11, EAX
+mPlacePeg       75, 11, EAX
 
 movzx EAX, solution[EDI+3]
-mPlacePeg       59, 13, EAX
+mPlacePeg       75, 13, EAX
 
 
 ;Set color back to White
@@ -774,8 +774,9 @@ jmp             _getColor
 
 jmp             _loop
 _decrease:
-cmp             [EAX], 0
-jle             _reset
+;cmp             [EAX], 0       ; TODO fix build error with this line - Trenton Young
+cmp             EAX, 0
+jle             _resetHigh
 
 sub             EAX, EBX
 
