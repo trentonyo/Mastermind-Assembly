@@ -182,7 +182,7 @@ greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 
 current_round               BYTE        0
 
-solution    DWORD    2,5,1,4
+solution    BYTE    2,5,1,4
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
 
@@ -512,7 +512,7 @@ PlaceFeedback ENDP
 ; -------------------------------------------------------- -
 PrintSolution PROC
 ; Author:           Cameron Kroeker
-; Description:      Prints the solution in solution spot
+; Description:      Prints the solution
 ;
 ; Parameters:       
 ;
@@ -520,26 +520,27 @@ PrintSolution PROC
 ; Postconditions:   
 ; -------------------------------------------------------- -
 
-mov EDI, 0              ; Set EDI to 0
+    mov EDI, 0              ; Set EDI to 0
 
     ; Print the value stored in list[0]
    
-mov EAX, solution[EDI]
+movzx EAX, solution[EDI]
 mPlacePeg       59, 7, EAX
 
-mov EAX, solution[EDI+4]
+movzx EAX, solution[EDI+1]
 mPlacePeg       59, 9, EAX
 
-mov EAX, solution[EDI+8]
+movzx EAX, solution[EDI+2]
 mPlacePeg       59, 11, EAX
 
-mov EAX, solution[EDI+12]
+movzx EAX, solution[EDI+3]
 mPlacePeg       59, 13, EAX
 
 
 ;Set color back to White
 push            8
 call            SetColorFromPalette
+
 
 mov EAX, 0
 ret
