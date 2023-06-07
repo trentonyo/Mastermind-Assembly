@@ -148,6 +148,10 @@ mPlaceFeedback  MACRO _x, _y, _feedback
     call        PlaceFeedback
 ENDM
 
+
+
+
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -176,7 +180,6 @@ MAP_text_color              DWORD       white,      white,      black,      whit
 
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
-invalidInput    			BYTE		"Invalid input.", CR, LF, 0
 
 ; (Gamestate)               Variables defining gameplay
 
@@ -186,6 +189,8 @@ solution                    BYTE        CODE_LENGTH DUP(?)
 game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 
 userArray                   DWORD       4 DUP(?)
+currX                       DWORD       1
+currIndex                   DWORD       0
 .code
 main PROC; (insert executable instructions here)
 
@@ -224,10 +229,12 @@ push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
 
-push            OFFSET userArray
-call            ListenUser
-call            CheckSimilar
+; push            OFFSET userArray
+; call            ListenUser
+; call            CheckSimilar
 
+push            OFFSET userArray
+call            GetUserCode
 ; End of program steps
 mGotoXY         1, 20
 
@@ -458,7 +465,7 @@ ListenUser PROC
         call ReadInt
         mov [EDI], EAX
         cmp ECX, 0
-        JE outOfAskUser
+        ;JE outOfAskUser
         sub ECX, 1
         JMP askUser
 
@@ -574,35 +581,34 @@ PlaceFeedback ENDP
 ; -------------------------------------------------------- -
 GetUserCode PROC
 ; Author:           Brayden Aldrich
-; Description:      Gets user input and updates user_guess array
+; Description:      Gets user inputs via arrow keys and the enter key,
+;                   dynamically displays these choices, then stores desired color
+;                   into userArray
+;
+; Parameters:       push OFFSET array
+;                   call
+;                   
 ;                   
 ;
-; Parameters:       push OFFSET user_guess
-;                   push TYPE   user_guess
-;                   
-;                   
-;
-; Postconditions:   
+; Postconditions:   Updated userArray
 ; -------------------------------------------------------- -
 push            EBP
 mov             EBP, ESP
 
-push            EDX
-push            ECX
-push            EBX
 push            EAX
-push            EDI
-push            ESI
+push            EBX
+push            ECX
+push            EDX
 
 _init_variables:
-    mov         EDI, [EBP + 12]         ; offset
-    mov         ESI, [EBP + 8]          ; type
-    mov         ECX, 0
+    mov             EDI, [EBP + 8]      ; Array offset 
+    mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be
+                                        ; displayed.
 _string:
-    mov         EDX, OFFSET selectColor
-    call        WriteString
+    mPrint          selectColor
 
-push            EAX                     
+mGotoXY         1, 19                   ; Move cursor to (1, 19). This is where user will see their current choice
+
 ;  loop until user inputs a code
 _loop:
     mov             EAX, 50
@@ -610,65 +616,70 @@ _loop:
     call            ReadKey
     jz              _loop
 
-pop             EAX
-push            ECX                     ; save ECX
-movzx           ECX, DX
+movzx           EDX, DX                 ; move key press code to edx
 
-cmp             ECX, 37                 ; left
+cmp             EDX, 37                 ; left
 je              _decrease
-cmp             ECX, 40                 ; down
+cmp             EDX, 40                 ; down
 je              _decrease
 
-cmp             ECX, 38                 ; up
+cmp             EDX, 38                 ; up
 je              _increase
-cmp             ECX, 39                 ; right
+cmp             EDX, 39                 ; right
 je              _increase
 
-cmp             ECX, 13                 ; enter
+cmp             EDX, 13                 ; enter
 je              _enter
-jmp             _invalid
-pop             ECX
+
 _increase:
-add             ECX, 1
-cmp             ECX, 7
+
+add             ECX, 1                  ; increment color map
+cmp             ECX, 8                  ; check if current index is too high
 jge             _resetHigh
-jmp             _getColor    
-      
-    _resetHigh:
-    mov             ECX, 0
-    _getColor:
-    mov             EAX, ECX
-    push            EAX
-    push            OFFSET  MAP_background_color
-    push            TYPE    MAP_background_color
-    call            ArrayAt
+jmp             _getColorHigh   
 
-    _currentColor:
-    ; somehow update the console to display the selection?
-    
-jmp             _loop
+    _resetHigh: 
+    mov             ECX, 0              ; reset the color map to 0
+    _getColorHigh:
+    mov             EAX, currX          ; move the current x index into EAX so
+    mPlacePeg       al, 19, ECX         ; mPlacePeg can use AL. Index will not reach AH 
+                                        ; ^ User's previous choices are displayed (currX, 19)
+jmp             _loop                   ; Loop until a new key press
+
 _decrease:
-cmp             [EAX], 0
-jle             _reset
 
-sub             EAX, EBX
+cmp             ECX, 0
+je              _resetLow
+sub             ECX, 1
+jmp             _getColorLow
+    _resetLow:
+    mov             ECX, 7              ; reset color to 7, looping to the top of the array
+    _getColorLow:
+    mov             EAX, currX          ; move current x index into EAX so it can be used in
+    mPlacePeg       al, 19, ECX         ; mPlacePeg
+                                        ; ^ User's previous choices are displayed (currX, 19)
+jmp             _loop                   ; Loop until a new key press
 
-
-jmp             _loop
 _enter:
+inc             currIndex               ; increment current index in userArray
+cmp             currIndex, 4            ; check to see if it's over array limit
+jge             _end
+mov             [EDI], ECX              ; add color number into current index    
+add             EDI, 4                  ; increment current index
+mov             EAX, currX              ; move current x coordinate into eax
+add             EAX, 5                  ; incease it by 5
+mov             currX, EAX              ; store updated currX
+jmp             _loop                   ; loop to get a new number
 
-; increase x pos in console and inc user_guess array
-jmp             _loop
-_invalid:
-    mov             EDX, OFFSET invalidInput
-    call            WriteString
-    jmp             _string
 
+_end:                                   ; break out of loop and return
 
-
-_end:
-
-ret 
+pop            EDX
+pop            ECX
+pop            EBX
+pop            EAX
+pop            EBP
+ret 4
 GetUserCode ENDP
 
 END main
