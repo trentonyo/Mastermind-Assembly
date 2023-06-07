@@ -226,10 +226,10 @@ selectColor    				BYTE		"Select a color for a peg using the arrow keys, and pre
 
 current_round               BYTE        0
 
-solution                    BYTE        CODE_LENGTH DUP(?)
-game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
+solution                    DWORD        CODE_LENGTH DUP(?)
+game_matrix                 DWORD        CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
-user_guess                  BYTE        CODE_LENGTH DUP(?)                     ; TODO consolidate arrays from test phase - Trenton Young
+user_guess                  DWORD        CODE_LENGTH DUP(?)                     ; TODO consolidate arrays from test phase - Trenton Young
 
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       0
@@ -651,7 +651,7 @@ CheckSimilar PROC
 ;                   call
 ;
 ; Preconditions:    Must have uArray and solArray as global variables
-;                   Both of the arrays must have a size of 4
+;                   Both of the arrays must have a size of 4   TODO must they, though? - Trenton Young
 ;                   Additional global variables needed:
 ;                   helperVar1, matches
 ;
@@ -754,17 +754,29 @@ mov EDI, 0              ; Set EDI to 0
 
     ; Print the value stored in list[0]
 
-movzx EAX, solution[EDI]
+mov EAX, solution[EDI]
 mPlacePeg       75, 7, EAX
 
-movzx EAX, solution[EDI+1]
+mov EAX, solution[EDI+1]
 mPlacePeg       75, 9, EAX
 
-movzx EAX, solution[EDI+2]
+mov EAX, solution[EDI+2]
 mPlacePeg       75, 11, EAX
 
-movzx EAX, solution[EDI+3]
+mov EAX, solution[EDI+3]
 mPlacePeg       75, 13, EAX
+;
+;movzx EAX, solution[EDI]
+;mPlacePeg       75, 7, EAX
+;
+;movzx EAX, solution[EDI+1]
+;mPlacePeg       75, 9, EAX
+;
+;movzx EAX, solution[EDI+2]
+;mPlacePeg       75, 11, EAX
+;
+;movzx EAX, solution[EDI+3]
+;mPlacePeg       75, 13, EAX
 
 
 ;Set color back to White
