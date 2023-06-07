@@ -175,6 +175,8 @@ MAP_text_color              DWORD       white,      white,      black,      whit
 ; (Localizations)           Define any messages to be displayed here
 
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
+selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
+invalidInput    			BYTE		"Invalid input.", CR, LF, 0
 
 ; (Gamestate)               Variables defining gameplay
 
@@ -569,5 +571,104 @@ pop             EBP
 ret 12
 PlaceFeedback ENDP
 
+; -------------------------------------------------------- -
+GetUserCode PROC
+; Author:           Brayden Aldrich
+; Description:      Gets user input and updates user_guess array
+;                   
+;
+; Parameters:       push OFFSET user_guess
+;                   push TYPE   user_guess
+;                   
+;                   
+;
+; Postconditions:   
+; -------------------------------------------------------- -
+push            EBP
+mov             EBP, ESP
+
+push            EDX
+push            ECX
+push            EBX
+push            EAX
+push            EDI
+push            ESI
+
+_init_variables:
+    mov         EDI, [EBP + 12]         ; offset
+    mov         ESI, [EBP + 8]          ; type
+    mov         ECX, 0
+_string:
+    mov         EDX, OFFSET selectColor
+    call        WriteString
+
+push            EAX                     
+;  loop until user inputs a code
+_loop:
+    mov             EAX, 50
+    call            Delay
+    call            ReadKey
+    jz              _loop
+
+pop             EAX
+push            ECX                     ; save ECX
+movzx           ECX, DX
+
+cmp             ECX, 37                 ; left
+je              _decrease
+cmp             ECX, 40                 ; down
+je              _decrease
+
+cmp             ECX, 38                 ; up
+je              _increase
+cmp             ECX, 39                 ; right
+je              _increase
+
+cmp             ECX, 13                 ; enter
+je              _enter
+jmp             _invalid
+pop             ECX
+_increase:
+add             ECX, 1
+cmp             ECX, 7
+jge             _resetHigh
+jmp             _getColor    
+      
+    _resetHigh:
+    mov             ECX, 0
+    _getColor:
+    mov             EAX, ECX
+    push            EAX
+    push            OFFSET  MAP_background_color
+    push            TYPE    MAP_background_color
+    call            ArrayAt
+
+    _currentColor:
+    ; somehow update the console to display the selection?
+    
+jmp             _loop
+_decrease:
+cmp             [EAX], 0
+jle             _reset
+
+sub             EAX, EBX
+
+
+jmp             _loop
+_enter:
+
+; increase x pos in console and inc user_guess array
+jmp             _loop
+_invalid:
+    mov             EDX, OFFSET invalidInput
+    call            WriteString
+    jmp             _string
+
+
+
+_end:
+
+ret 
+GetUserCode ENDP
 
 END main
