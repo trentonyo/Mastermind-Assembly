@@ -246,13 +246,8 @@ msgHh5                      BYTE        LF, "blows: ", 0
 msgSpace                    BYTE        " ", 0
 
 userArray                   DWORD       4 DUP(?)
-currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7
-currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
+currX                       DWORD       1               ; Helper var for GetUserCode. Will store current x coordinate.
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
-
-
-
-
 .code
 main PROC; (insert executable instructions here)
 
@@ -296,7 +291,6 @@ call            GenerateCode
 
 push            OFFSET userArray
 call            GetUserCode
-
 
 ; End of program steps
 mGotoXY         1, 20
@@ -740,14 +734,13 @@ _init_variables:
 _string:
     mPrint          selectColor
 
-                  
+mGotoXY         1, 19                   ; Move cursor to (1, 19). This is where user will see their current choice
 
 ; Initialize the screen and ECX to show a color before the user hits the arrow keys. 
 _preloop:
-mov             EAX, currX              ; init current x
-mov             EBX, currY              ; init current y
-mov             ECX, 0                  ; init red color
-mPlacePeg       al, bl, 0               ; place peg on coordinate
+mov             EAX, currX
+mov             ECX, 0
+mPlacePeg       al, 19, 0
 
 ;  loop until user inputs a code
 _loop:
@@ -757,25 +750,19 @@ _loop:
     jz              _loop
 
 movzx           EDX, DX                 ; move key press code to edx
+
 cmp             EDX, 37                 ; left
 je              _decrease
+cmp             EDX, 40                 ; down
+je              _decrease
 
-
-
+cmp             EDX, 38                 ; up
+je              _increase
 cmp             EDX, 39                 ; right
 je              _increase
 
 cmp             EDX, 13                 ; enter
 je              _enter
-
-cmp             EDX, 40                 ; down
-je              _enter
-
-cmp             EDX, 38                 ; up
-je              _up
-
-cmp             EDX, 8                  ; backspace
-je              _up
 
 _increase:
 
@@ -787,9 +774,8 @@ jmp             _getColorHigh
     _resetHigh: 
     mov             ECX, 0              ; reset the color map to 0
     _getColorHigh:
-    mov             EAX, currX          ; move the current x index into EAX so mPlacePeg can use AL 
-    mov             EBX, currY          ; move current y index into EBX so mPlacePeg can use BL
-    mPlacePeg       al, bl, ECX         
+    mov             EAX, currX          ; move the current x index into EAX so
+    mPlacePeg       al, 19, ECX         ; mPlacePeg can use AL. Index will not reach AH 
                                         ; ^ User's previous choices are displayed (currX, 19)
 jmp             _loop                   ; Loop until a new key press
 
@@ -802,49 +788,32 @@ jmp             _getColorLow
     _resetLow:
     mov             ECX, 7              ; reset color to 7, looping to the top of the array
     _getColorLow:
-    mov             EAX, currX          ; move current x index into EAX so it can be used in mPlacePeg
-    mov             EBX, currY          ; move current y index to EBX to be used in mPlacePeg
-    mPlacePeg       al, bl, ECX         
+    mov             EAX, currX          ; move current x index into EAX so it can be used in
+    mPlacePeg       al, 19, ECX         ; mPlacePeg
                                         ; ^ User's previous choices are displayed (currX, 19)
 jmp             _loop                   ; Loop until a new key press
 
 _enter:
 mov             [EDI], ECX              ; add color number into current index         
 add             EDI, 4                  ; increment current index
-mov             EAX, currY              ; move current y coordinate into eax
-add             EAX, 2                  ; incease it by 2
-mov             currY, EAX              ; store updated currY
+mov             EAX, currX              ; move current x coordinate into eax
+add             EAX, 5                  ; incease it by 5
+mov             currX, EAX              ; store updated currX
 inc             currIndex               ; increment current index in userArray
 cmp             currIndex, 4            ; check to see if it's over array limit
 jge             _end
-jmp             _preloop                ; loop to get a new number
-
-_up:
-    mov         EAX, currY              
-    cmp         EAX, 7                  ; compare current y coord with 7. If it's 7, just go back to looping.
-    je          _loop                   
-    sub         EAX, 2                  ; subtract 2 from currY to get to peg above currY
-    mov         currY, EAX
-    sub         EDI, 4                  ; move array pointer back to previous entry
-    mov         EAX, currIndex          
-    sub         EAX, 1                  ; subtract 1 from currIndex
-    mov         currIndex, EAX          
-    jmp         _preloop                ; go to preloop
+jmp             _preloop                   ; loop to get a new number
 
 
 _end:                                   ; break out of loop and return
-push            8
-call            SetColorFromPalette     ; set color back to white
+push           8
+call           SetColorFromPalette      ; set color back to white
 
-mov             currY, 7                ; reset currY for next round
-mov             EAX, currX              ; set currX to currX + 8 to get next round x coordinate
-add             EAX, 8
-
-pop             EDX
-pop             ECX
-pop             EBX
-pop             EAX
-pop             EBP
+pop            EDX
+pop            ECX
+pop            EBX
+pop            EAX
+pop            EBP
 ret 4
 GetUserCode ENDP
 
