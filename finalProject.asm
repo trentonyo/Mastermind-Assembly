@@ -285,9 +285,6 @@ push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
 
-;push            OFFSET userArray   TODO this is the latest I think, needs to use a different array - Trenton Young
-call            ListenUser
-call            CheckSimilar
 
 ; End of program steps
 mGotoXY         1, 20
@@ -295,10 +292,10 @@ mGotoXY         1, 20
 push            8
 call            SetColorFromPalette
 
-;; comparing uArray and solArray elements - updates hits and blows TODO I think this is old, I restored it from old file - Trenton Young
-;push            OFFSET blows
-;push            OFFSET hits
-;call            CheckSimilar
+; comparing uArray and solArray elements - updates hits and blows
+push            OFFSET blows
+push            OFFSET hits
+call            CheckSimilar
 
 invoke EXITProcess, 0		; exit to operating system
 main ENDP
