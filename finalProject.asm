@@ -188,10 +188,10 @@ game_matrix                 BYTE        CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       ?
 blows                       DWORD       ?
-uArray                      DWORD       5, 10, 1, 2       ; user guesses
-solArray                    DWORD       10, 5, 2, 1       ; peg positions?
+uArray                      DWORD       3, 3, 3, 3       ; user guesses
+solArray                    DWORD       3, 3, 1, 3       ; peg positions?
 helperVar1                  DWORD       ?
-matches                     DWORD       ?                 ; inverse of blows
+matches                     DWORD       ?
 
 ; Hits and Blows temporary helper variables   - feel free to delete after
 msgHh1                      BYTE        "Comparing arrays", LF, 0
@@ -200,6 +200,7 @@ msgHh3                      BYTE        LF, "Solution array: ", 0
 msgHh4                      BYTE        LF, "hits: ", 0
 msgHh5                      BYTE        LF, "blows: ", 0
 msgSpace                    BYTE        " ", 0
+
 .code
 main PROC; (insert executable instructions here)
 
@@ -572,11 +573,12 @@ CheckSimilar PROC
         notAHit:
             ; ECX => i
             ; EBX => j
-            mov EBX, 0
+            mov helperVar1, EAX
+            mov EBX, hits
             loop2ndArray:
                 push EBX
-                push OFFSET solArray
-                push TYPE solArray
+                push OFFSET uArray
+                push TYPE uArray
                 call ArrayAt
                 cmp EAX, helperVar1
                 JE isAMatch
