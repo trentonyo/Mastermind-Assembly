@@ -287,12 +287,11 @@ mGotoXY         1, 20
 push            8
 call            SetColorFromPalette
 
-; comparing uArray and solArray - updates hits and blows
-push            OFFSET solArray
-push            OFFSET uArray
-push            blows
-push            hits
+; comparing uArray and solArray elements - updates hits and blows
+push            OFFSET blows
+push            OFFSET hits
 call            CheckSimilar
+
 invoke EXITProcess, 0		; exit to operating system
 main ENDP
 
@@ -579,100 +578,79 @@ CheckSimilar PROC
 ;                   Finally updates the hits and blows variables
 ;
 ; Parameters:
-;                   push blows                  [12]
-;                   push hits                   [8]
+;                   push OFFSET blows       [12]
+;                   push OFFSEt hits        [8]
 ;                   call
 ;
 ; Preconditions:    Must have uArray and solArray as global variables
 ;                   Both of the arrays must have a size of 4
+;                   Additional global variables needed:
+;                   helperVar1, matches
 ;
 ; Postconditions:   Returns the number of hits and blows
 ; -------------------------------------------------------- -
     push    EBP
-    mPrint msgHh1
-    mPrint msgHh2
+    mov     EBP, ESP
 
     mov     ECX, 0
     PrintuArray:
-        push ECX
-        push OFFSET uArray
-        push TYPE uArray
-        call ArrayAt
-        call WriteDec
-        mov helperVar1, EAX
-        mPrint msgSpace
+        push    ECX
+        push    OFFSET uArray
+        push    TYPE uArray
+        call    ArrayAt
+        mov     helperVar1, EAX
 
-        push ECX
-        push OFFSET solArray
-        push TYPE solArray
-        call ArrayAt
-        mov EBX, helperVar1
-        cmp EBX, EAX
-        JE isAHit
-        JMP notAHit
+        push    ECX
+        push    OFFSET solArray
+        push    TYPE solArray
+        call    ArrayAt
+        mov     EBX, helperVar1
+        cmp     EBX, EAX
+        JE      isAHit
+        JMP     notAHit
         isAHit:
             add hits, 1
 
         notAHit:
             ; ECX => i
             ; EBX => j
-            mov helperVar1, EAX
-            mov EBX, hits
+            mov     helperVar1, EAX
+            mov     EBX, hits
             loop2ndArray:
-                push EBX
-                push OFFSET uArray
-                push TYPE uArray
-                call ArrayAt
-                cmp EAX, helperVar1
-                JE isAMatch
-                cmp EBX, 3
-                JE outOfisThisInArray
-                add EBX, 1
-                JMP loop2ndArray
+                push    EBX
+                push    OFFSET uArray
+                push    TYPE uArray
+                call    ArrayAt
+                cmp     EAX, helperVar1
+                JE      isAMatch
+                cmp     EBX, 3
+                JE      outOfisThisInArray
+                add     EBX, 1
+                JMP     loop2ndArray
 
             isAMatch:
-                add matches, 1
-                JMP outOfisThisInArray
+                add     matches, 1
+                JMP     outOfisThisInArray
 
 
         outOfisThisInArray:
-            cmp ECX, 3
-            JE outOfPrintuArray
-            add ECX, 1
-            JMP PrintuArray
+            cmp     ECX, 3
+            JE      outOfPrintuArray
+            add     ECX, 1
+            JMP     PrintuArray
 
 outOfPrintuArray:
+    mov     EBX, [EBP + 8]
+    mov     EAX, hits
+    mov     [EBX], EAX      ; saving to hits variable
 
-    mPrint msgHh3
-
-    mov     ECX, 0
-    PrintsolArray:
-            push ECX
-            push OFFSET solArray
-            push TYPE solArray
-            call ArrayAt
-            call WriteDec
-            mPrint msgSpace
-            cmp ECX, 3
-            JE outOfPrintsolArray
-            add ECX, 1
-            JMP PrintsolArray
-
-outOfPrintsolArray:
-    mPrint msgHh4
-
-    ; update hits
-    mov EAX, hits
-    call WriteDec
-
-    mPrint msgHh5
-
-    mov EAX, matches
-    sub EAX, hits
-    call WriteDec
+    mov     EAX, matches
+    sub     EAX, hits
+    mov     EBX, [EBP + 12]
+    mov     [EBX], EAX      ; saving to blows variable
 
     pop     EBP
-    ret
+    ret     8
 CheckSimilar ENDP
 
 END main
