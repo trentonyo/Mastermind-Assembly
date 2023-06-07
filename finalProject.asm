@@ -285,6 +285,9 @@ push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
 
+push            OFFSET userArray
+call            ListenUser
+call            CheckSimilar
 
 ; End of program steps
 mGotoXY         1, 20
@@ -400,6 +403,7 @@ pop         EBP
 ret         12
 GenerateCode ENDP
 
+
 ; -------------------------------------------------------- -
 ArrayAt PROC
 ; Author:           Trenton Young
@@ -493,6 +497,67 @@ pop                 EBP
 ret 4
 SetColorFromPalette ENDP
 
+; -------------------------------------------------------- -
+ListenUser PROC
+; Author:           Hla Htun
+; Description:      Takes in 4 user input and stores it in the array
+;
+; Parameters:
+;                   push OFFSET userArray
+;                   push TYPE userArray
+;                   call
+; Preconditions:    An array as a parameter to store the 4 user inputs
+; Postconditions:   None. The array passed will be updated with the user input
+; -------------------------------------------------------- -
+    ; call readDec
+    ; store to array
+
+    ; loop until 4
+    push EBP
+    mov EBP, ESP
+    pushad
+
+
+    mov EDI, [EBP+8]
+    mov ECX, 4
+    askUser:
+        call ReadInt
+        mov [EDI], EAX
+        cmp ECX, 0
+        JE outOfAskUser
+        sub ECX, 1
+        JMP askUser
+
+    popad
+    pop EBP
+    ret
+ListenUser ENDP
+
+; -------------------------------------------------------- -
+CheckSimilar PROC
+; Author:           Hla Htun
+; Description:      Takes in two arrays. Counts the number of
+;                   indices with identical values between arrays (i.e. hits)
+;                   Next, counts the number of values shared between arrays
+;                   subtracts hits from blows and returns each value
+;
+; Parameters:
+;                   push OFFSET solArray
+;                   push TYPE solArray
+;                   push OFFSET userArray
+;                   push TYPE userArray
+;                   call
+; Postconditions:   Returns the number of hits and blows, i.e. ret hits, blows
+; -------------------------------------------------------- -
+    ;push    EBP
+    ;push    EBP, ESP
+
+
+
+    ;pop     EBP
+    ret
+CheckSimilar ENDP
+
 ; --------------------------------------------------------
 PlaceFeedback PROC
 ; Author:       Trenton Young
@@ -571,6 +636,107 @@ pop             EBP
 
 ret 12
 PlaceFeedback ENDP
+
+; -------------------------------------------------------- -
+GetUserCode PROC
+; Author:           Brayden Aldrich
+; Description:      Gets user input and updates user_guess array
+;
+;
+; Parameters:       push OFFSET user_guess
+;                   push TYPE   user_guess
+;
+;
+;
+; Postconditions:
+; -------------------------------------------------------- -
+push            EBP
+mov             EBP, ESP
+
+push            EDX
+push            ECX
+push            EBX
+push            EAX
+push            EDI
+push            ESI
+
+_init_variables:
+    mov         EDI, [EBP + 12]         ; offset
+    mov         ESI, [EBP + 8]          ; type
+    mov         ECX, 0
+_string:
+    mov         EDX, OFFSET selectColor
+    call        WriteString
+
+push            EAX
+;  loop until user inputs a code
+_loop:
+    mov             EAX, 50
+    call            Delay
+    call            ReadKey
+    jz              _loop
+
+pop             EAX
+push            ECX                     ; save ECX
+movzx           ECX, DX
+
+cmp             ECX, 37                 ; left
+je              _decrease
+cmp             ECX, 40                 ; down
+je              _decrease
+
+cmp             ECX, 38                 ; up
+je              _increase
+cmp             ECX, 39                 ; right
+je              _increase
+
+cmp             ECX, 13                 ; enter
+je              _enter
+jmp             _invalid
+pop             ECX
+_increase:
+add             ECX, 1
+cmp             ECX, 7
+jge             _resetHigh
+jmp             _getColor
+
+    _resetHigh:
+    mov             ECX, 0
+    _getColor:
+    mov             EAX, ECX
+    push            EAX
+    push            OFFSET  MAP_background_color
+    push            TYPE    MAP_background_color
+    call            ArrayAt
+
+    _currentColor:
+    ; somehow update the console to display the selection?
+
+jmp             _loop
+_decrease:
+cmp             [EAX], 0
+jle             _reset
+
+sub             EAX, EBX
+
+
+jmp             _loop
+_enter:
+
+; increase x pos in console and inc user_guess array
+jmp             _loop
+_invalid:
+    mov             EDX, OFFSET invalidInput
+    call            WriteString
+    jmp             _string
+
+
+
+_end:
+
+ret
+GetUserCode ENDP
+
 
 ; -------------------------------------------------------- -
 CheckSimilar PROC
@@ -797,5 +963,6 @@ _end:
 
 ret
 GetUserCode ENDP
+
 
 END main
