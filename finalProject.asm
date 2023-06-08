@@ -49,11 +49,11 @@ ENDM
 ; --------------------------------------------------------
 mArand          MACRO _low, _high, _target
 ; Author:       Trenton Young
-; Description:  Random range from Irvine's WriteString,
+; Description:  Random range [_low.._high] from Irvine's lib,
 ;               output is stored in given register
 ;
-; Use:          _low and _high may be literals, _target may
-;               be a register
+; Use:          _low (inclusive) and _high  (inclusive) may be
+;               literals, _target may be a register
 ; --------------------------------------------------------
     push        EAX
 
@@ -237,6 +237,7 @@ blows                       DWORD       0
 uArray                      DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
 solArray                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
 helperVar1                  DWORD       ?
+T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
 ; Hits and Blows temporary helper variables   - feel free to delete after
@@ -274,6 +275,11 @@ gameplay:
 ; Runs the gameloop TODO contains test code right now
 ; --------------------------------------------------------
 
+mov ECX, 10
+_debug:
+    mArand 1, 3, EBX
+    loop _debug
+
 call            DrawNewGameboard
 
 mPlacePeg       7, 7, 2
@@ -285,12 +291,12 @@ mPlaceFeedback  7, 4, HIT
 mPlaceFeedback  8, 4, BLOW
 mPlaceFeedback  7, 5, BLOW
 
-push            FALSE
+push            TRUE
 push            TYPE solution
 push            OFFSET solution
-;call            GenerateCode
+call            GenerateCode
 
-;call            PrintSolution
+call            PrintSolution
 
 
 push            OFFSET userArray
@@ -373,15 +379,17 @@ push        EDX
 
 mov         EAX, 0
 mov         ECX, CODE_LENGTH
+mov         T_HelperVar, 0
+;inc         ECX
 
 _clearCheckArrays:
     mov     uArray[EAX], OUT_OF_RANGE_1
     mov     solArray[EAX], OUT_OF_RANGE_2
 
-    inc     EAX
+    add     EAX, TYPE uArray
     loop    _clearCheckArrays
 
-    mov     uArray[1], 1            ; initialize k for the accepted code tracker (see _checkCode for formula)
+    mov     T_HelperVar, 0            ; initialize index accumulator
 
 _stackFrame:
     mov     ECX, CODE_LENGTH
@@ -389,15 +397,15 @@ _stackFrame:
     mov     EBX, [EBP + 12]         ; TYPE of target array
     mov     EAX, [EBP + 8]          ; OFFSET of target array
 
-jmp _generateCode
-_popTwo:
-    pop     EBX;
-    pop     EAX;                    ; During the code checking, there are JMPs while registers are pushed,
 _generateCode:
     mov     EDX, [EBP + 16]         ; Reclaim the duplicate flag
     push    ECX                     ; Preserve loop counter
 
-    mArand  1, COLORS, ECX          ; Get a random number and store to EDX
+    push    EAX
+    mov     EAX, COLORS
+    dec     EAX
+    mArand  0, EAX, ECX             ; Get a random number and store to ECX
+    pop     EAX
 
     cmp     EDX, TRUE
     je     _allowDuplicates
@@ -407,19 +415,6 @@ _generateCode:
     pop     ECX                     ; ECX is loop counter again
 
     _checkCode:
-        ; Uses uArray[0] to store the current candidate to add to the code,
-        ;  and uArray[1] to store (codeLength * k) + 1 where k = number of accepted code inputs
-        push            EAX
-        push            EBX
-
-        mov             EAX, uArray[1]
-        mov             EBX, CODE_LENGTH
-
-        push            EDX                 ; preserve EDX (random candidate) for DIV
-            cdq
-            div         EBX                 ; Decode step, current accepted code inputs is in EAX
-        pop             EDX
-
         mov             uArray[0], EDX      ; Store the current candidate in uArray[0]
 
         ; comparing uArray(candidate, index, ?, ?) and solArray(accepted codes) elements - updates hits and blows
@@ -427,22 +422,21 @@ _generateCode:
         push            OFFSET hits
         call            CheckSimilar
 
-        cmp             hits, 0             ; WARNING: EBX and EAX are on the stack here
-        jg              _popTwo
-        cmp             blows, 0            ; TODO every turn adds another blow
-        jg              _popTwo             ; check if the candidate has already been selected,
-                                            ; run generate code over if so BUT FIRST POP EBX AND EAX BACK IN PLACE
+        cmp             hits, 0
+        jg              _generateCode
+        cmp             blows, 0
+        jg              _generateCode       ; check if the candidate has already been selected, run generate code over if so
 
-        mov             solArray[EAX], EDX  ; store the accepted candidate in the next slot of the solution array
-
-        push            EDX                 ; preserve EDX (random candidate) for MUL
-            inc         EAX                 ; increment uArray[1] round counter
-            mul         EBX
-            mov         uArray[1], EAX      ; Re-encode step
-        pop             EDX
-
+        push            EBX
+        mov             EBX, T_HelperVar
+        mov             solArray[EBX], EDX  ; store the accepted candidate in the next slot of the solution array
         pop             EBX
+
+        push            EAX
+        mov             EAX, TYPE uArray
+        add             T_HelperVar, EAX    ; increment index accumulator
         pop             EAX
+
 
     push    ECX                     ; _allowDuplicates expects a floating loop counter
     mov     ECX, EDX                ; and for the random number to be stored in ECX
@@ -673,7 +667,7 @@ CheckSimilar PROC
     mov     [EBX], EAX      ; initializing hits variable
     mov     EBX, [EBP + 12]
     mov     [EBX], EAX      ; initializing blows variable
-
+    mov     matches, EAX
 
     mov     ECX, 0
     PrintuArray:
@@ -761,13 +755,13 @@ mov EDI, 0              ; Set EDI to 0
 mov EAX, solution[EDI]
 mPlacePeg       75, 7, EAX
 
-mov EAX, solution[EDI+1]
+mov EAX, solution[EDI+4]
 mPlacePeg       75, 9, EAX
 
-mov EAX, solution[EDI+2]
+mov EAX, solution[EDI+8]
 mPlacePeg       75, 11, EAX
 
-mov EAX, solution[EDI+3]
+mov EAX, solution[EDI+12]
 mPlacePeg       75, 13, EAX
 ;
 ;movzx EAX, solution[EDI]
@@ -933,6 +927,5 @@ pop             EAX
 pop             EBP
 ret 4
 GetUserCode ENDP
-
 
 END main
