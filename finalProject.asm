@@ -288,9 +288,9 @@ mPlaceFeedback  7, 5, BLOW
 push            FALSE
 push            TYPE solution
 push            OFFSET solution
-call            GenerateCode
+;call            GenerateCode
 
-call            PrintSolution
+;call            PrintSolution
 
 
 push            OFFSET userArray
