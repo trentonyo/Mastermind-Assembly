@@ -193,23 +193,6 @@ mIsArrayElementEqual  MACRO _iArray, _isEqual
 
 ENDM
 
-; --------------------------------------------------------
-mPlaceCarat     MACRO _x, _y
-; Author:       Brayden Aldrich
-; Description:  Draws a carat next to current peg (_x, _y).
-;               Carat will be place 2 spots to the right of peg
-;
-; Use:          Pass an X and Y value belonging to the 
-;               Peg. This macro will deal with positioning of
-;               the carat in relation to this X Y value.
-;               
-; --------------------------------------------------------
-    mGotoXY         _x, _y
-    push            8
-    call            SetColorFromPalette
-    mPrint          GUI_feedback_carat
-
-ENDM
 
 .data
 
@@ -229,8 +212,6 @@ GUI_gameboard_pegs          BYTE        "-@", 0         ; ASCII for a game peg
 GUI_feedback_hit            BYTE        "o", 0
 GUI_feedback_blow           BYTE        "*", 0
 GUI_feedback_miss           BYTE        ".", 0
-
-GUI_feedback_carat          BYTE        "<", 0
 
 ;                                       ~ pegs color palette                                                                     ~      ~ feedback color palette  ~
 MAP_background_color        DWORD       red,        gray,       green,      blue,       yellow,     cyan,       magenta,    brown,      white,      white,      white
