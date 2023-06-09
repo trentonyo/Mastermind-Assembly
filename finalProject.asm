@@ -193,6 +193,24 @@ mIsArrayElementEqual  MACRO _iArray, _isEqual
 
 ENDM
 
+; --------------------------------------------------------
+mPlaceCarat     MACRO _x, _y
+; Author:       Brayden Aldrich
+; Description:  Draws a carat next to current peg (_x, _y).
+;               Carat will be place 2 spots to the right of peg
+;
+; Use:          Pass an X and Y value belonging to the 
+;               Peg. This macro will deal with positioning of
+;               the carat in relation to this X Y value.
+;               
+; --------------------------------------------------------
+    mGotoXY         _x, _y
+    push            8
+    call            SetColorFromPalette
+    mPrint          GUI_feedback_carat
+
+ENDM
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -211,6 +229,8 @@ GUI_gameboard_pegs          BYTE        "-@", 0         ; ASCII for a game peg
 GUI_feedback_hit            BYTE        "o", 0
 GUI_feedback_blow           BYTE        "*", 0
 GUI_feedback_miss           BYTE        ".", 0
+
+GUI_feedback_carat          BYTE        "<", 0
 
 ;                                       ~ pegs color palette                                                                     ~      ~ feedback color palette  ~
 MAP_background_color        DWORD       red,        gray,       green,      blue,       yellow,     cyan,       magenta,    brown,      white,      white,      white
@@ -248,6 +268,7 @@ msgHh4                      BYTE        LF, "hits: ", 0
 msgHh5                      BYTE        LF, "blows: ", 0
 msgSpace                    BYTE        " ", 0
 
+
 userArray                   DWORD       4 DUP(?)                                ; TODO consolidate arrays from test phase - Trenton Young
 currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
@@ -276,9 +297,9 @@ gameplay:
 ; --------------------------------------------------------
 
 mov ECX, 10
-_debug:
-    mArand 1, 3, EBX
-    loop _debug
+; _debug:
+;     mArand 1, 3, EBX
+;     loop _debug
 
 call            DrawNewGameboard
 
@@ -815,8 +836,14 @@ push            EDX
 
 _init_variables:
     mov             EDI, [EBP + 8]      ; Array offset 
-    mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be
-                                        ; displayed.
+    mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be displayed.
+    mov             ECX, 0
+    mov             [EDI], ECX
+    mov             [EDI + 4], ECX
+    mov             [EDI + 8], ECX
+    mov             [EDI + 12], ECX
+
+    
 _string:
     mPrint          selectColor
 
@@ -826,8 +853,8 @@ _string:
 _preloop:
 mov             EAX, currX              ; init current x
 mov             EBX, currY              ; init current y
-mov             ECX, 0                  ; init red color
-mPlacePeg       al, bl, 0               ; place peg on coordinate
+mov             ECX, [EDI]                ; init red color
+mPlacePeg       al, bl, ECX               ; place peg on coordinate
 
 ;  loop until user inputs a code
 _loop:
