@@ -1,6 +1,6 @@
- TITLE Mastermind			(AddTwo.asm)
+ TITLE Mastermind			(finalProject.asm)
 
-; Author(s) : Trenton Young
+; Author(s) : Trenton Young, Hla Htun, Brayden, Cameron Kroeker
 ; Course / Project ID  CS 271 / Final Project
 ; Description: Play Mastermind! The classic codebreaker game!
 
@@ -8,19 +8,19 @@
 INCLUDE Irvine32.inc
 
 ; (insert constant definitions here)
-TRUE = 1
-FALSE = 0
+TRUE    = 1
+FALSE   = 0
 
-HIT = 2
-BLOW = 1
-MISS = 0
+HIT     = 2
+BLOW    = 1
+MISS    = 0
 
 CR = 13
 LF = 10
 
 USER_NAME_LEN = 24
 
-ROUNDS = 8
+ROUNDS      = 8
 CODE_LENGTH = 4
 
 COLS = ROUNDS                       ; Semantic equivalents for the game array
@@ -1196,7 +1196,7 @@ PlaceFeedbackGameTurn PROC
 ; Author:           Hla Htun
 ; Description:      Places the feedback for specific round
 ;
-; Parameters:       push    current_round         ; this is the nth round
+; Parameters:       push    current_round    ; this is the nth round
 ;                   call
 ;
 ; Postconditions:   Feedbacks will be displayed on the GameBoard
@@ -1208,12 +1208,7 @@ PlaceFeedbackGameTurn PROC
     push        EBX
     push        EAX
 
-;    mGotoXY     1, 25
-;    mov         AL, 'C'
-;    call        WriteChar
-    mov         EAX, [EBP + 8]
-;    call        WriteDec
-;    call        Crlf
+    mov         EAX, [EBP + 8]          ; current round number
 
     cmp         EAX, 8
     JE          _roundOne
@@ -1232,47 +1227,47 @@ PlaceFeedbackGameTurn PROC
     JMP         _roundEight
 
     _roundOne:
-        mov     H_HelperVarX, 7
+        mov     H_HelperVarX, 7         ; move cursor
         JMP     _printDraft
     _roundTwo:
-        mov     H_HelperVarX, 15
+        mov     H_HelperVarX, 15        ; move cursor
         JMP     _printDraft
     _roundThree:
-        mov     H_HelperVarX, 23
+        mov     H_HelperVarX, 23        ; move cursor
         JMP     _printDraft
     _roundFour:
-        mov     H_HelperVarX, 31
+        mov     H_HelperVarX, 31        ; move cursor
         JMP     _printDraft
     _roundFive:
-        mov     H_HelperVarX, 39
+        mov     H_HelperVarX, 39        ; move cursor
         JMP     _printDraft
     _roundSix:
-        mov     H_HelperVarX, 47
+        mov     H_HelperVarX, 47        ; move cursor
         JMP     _printDraft
     _roundSeven:
-        mov     H_HelperVarX, 55
+        mov     H_HelperVarX, 55        ; move cursor
         JMP     _printDraft
     _roundEight:
-        mov     H_HelperVarX, 63
+        mov     H_HelperVarX, 63            ; move cursor
         JMP     _printDraft
 
     _printDraft:
         mov     H_HelperVarY, 4
         mov     H_HelperVarMovY, 0
-        cmp     hits, 0
+        cmp     hits, 0                     ; if no hits, don't draw
         JE      _outofPrintHitsHH
 
         mov     EBX, 0
         _printHitsHH:
-            cmp     H_HelperVarMovY, 2
+            cmp     H_HelperVarMovY, 2      ; see if Y needs to be incremented
             JL      _continue1HH
             inc     H_HelperVarY
             sub     H_HelperVarX, 2
             mov     H_HelperVarMovY, 0
             _continue1HH:
-                mPlaceFeedback H_HelperVarX, H_HelperVarY, HIT
-                inc     H_HelperVarX
-                inc     H_HelperVarMovY
+                mPlaceFeedback H_HelperVarX, H_HelperVarY, HIT      ; draw hit
+                inc     H_HelperVarX                                ; move X
+                inc     H_HelperVarMovY                             ; increment MovY counter
 
             inc EBX
             cmp EBX, hits
@@ -1282,19 +1277,19 @@ PlaceFeedbackGameTurn PROC
 
         mov     H_HelperVarY, 4
         mov     H_HelperVarMovY, 0
-        cmp     blows, 0
+        cmp     blows, 0                ; if no blows, don't draw
         JE      _outofPrintBlowsHH
         mov     EBX, 0
         _printBlowsHH:
-            cmp     H_HelperVarMovY, 2
+            cmp     H_HelperVarMovY, 2  ; see if Y needs to be incremented
             JL      _continue2HH
             inc     H_HelperVarY
             sub     H_HelperVarX, 2
             mov     H_HelperVarMovY, 0
             _continue2HH:
-                mPlaceFeedback H_HelperVarX, H_HelperVarY, BLOW
-                inc     H_HelperVarX
-                inc     H_HelperVarMovY
+                mPlaceFeedback H_HelperVarX, H_HelperVarY, BLOW     ; draw blow
+                inc     H_HelperVarX                                ; move X
+                inc     H_HelperVarMovY                             ; increment MovY counter
 
             inc EBX
             cmp EBX, blows
@@ -1310,7 +1305,7 @@ PlaceFeedbackGameTurn PROC
     pop         EBX
     pop         ECX
     pop         EBP
-    ret
+ret
 PlaceFeedbackGameTurn ENDP
 
 ; -------------------------------------------------------- -
