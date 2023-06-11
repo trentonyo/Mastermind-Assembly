@@ -227,16 +227,16 @@ selectColor    				BYTE		"Select a color for a peg using the arrow keys, and pre
 
 current_round               BYTE        0
 
-solution                    DWORD        CODE_LENGTH DUP(?)
+solution                    DWORD        CODE_LENGTH DUP(OUT_OF_RANGE_2)
 game_matrix                 DWORD        CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
-user_guess                  DWORD        CODE_LENGTH DUP(?)                     ; TODO consolidate arrays from test phase - Trenton Young
+user_guess                  DWORD        CODE_LENGTH DUP(OUT_OF_RANGE_1)                     ; TODO consolidate arrays from test phase - Trenton Young
 
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       0
 blows                       DWORD       0
-uArray                      DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
-solArray                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
+;user_guess                 DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
+;solution                   DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
 helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
@@ -311,7 +311,7 @@ mGotoXY         1, 20
 push            8
 call            SetColorFromPalette
 
-; comparing uArray and solArray elements - updates hits and blows
+; comparing user_guess and solution elements - updates hits and blows
 push            OFFSET blows
 push            OFFSET hits
 call            CheckSimilar
@@ -369,7 +369,7 @@ GenerateCode PROC
 ;
 ; Preconditions:    Define global const CODE_LENGTH
 ; Postconditions:   Target will contain the new code,
-;                   uArray and solArray will be mutated
+;                   user_guess and solution will be mutated
 ; -------------------------------------------------------- -
 push        EBP
 mov         EBP, ESP    ; register-indirect initialization
@@ -385,10 +385,10 @@ mov         T_HelperVar, 0
 ;inc         ECX
 
 _clearCheckArrays:
-    mov     uArray[EAX], OUT_OF_RANGE_1
-    mov     solArray[EAX], OUT_OF_RANGE_2
+    mov     user_guess[EAX], OUT_OF_RANGE_1
+    mov     solution[EAX], OUT_OF_RANGE_2
 
-    add     EAX, TYPE uArray
+    add     EAX, TYPE user_guess
     loop    _clearCheckArrays
 
     mov     T_HelperVar, 0            ; initialize index accumulator
@@ -417,9 +417,9 @@ _generateCode:
     pop     ECX                     ; ECX is loop counter again
 
     _checkCode:
-        mov             uArray[0], EDX      ; Store the current candidate in uArray[0]
+        mov             user_guess[0], EDX      ; Store the current candidate in user_guess[0]
 
-        ; comparing uArray(candidate, index, ?, ?) and solArray(accepted codes) elements - updates hits and blows
+        ; comparing user_guess(candidate, index, ?, ?) and solution(accepted codes) elements - updates hits and blows
         push            OFFSET blows
         push            OFFSET hits
         call            CheckSimilar
@@ -431,11 +431,11 @@ _generateCode:
 
         push            EBX
         mov             EBX, T_HelperVar
-        mov             solArray[EBX], EDX  ; store the accepted candidate in the next slot of the solution array
+        mov             solution[EBX], EDX  ; store the accepted candidate in the next slot of the solution array
         pop             EBX
 
         push            EAX
-        mov             EAX, TYPE uArray
+        mov             EAX, TYPE user_guess
         add             T_HelperVar, EAX    ; increment index accumulator
         pop             EAX
 
@@ -650,7 +650,7 @@ CheckSimilar PROC
 ;                   push OFFSEt hits        [8]
 ;                   call
 ;
-; Preconditions:    Must have uArray and solArray as global variables
+; Preconditions:    Must have user_guess and solution as global variables
 ;                   Both of the arrays must have a size of 4   TODO must they, though? - Trenton Young
 ;                   Additional global variables needed:
 ;                   helperVar1, matches
@@ -672,16 +672,16 @@ CheckSimilar PROC
     mov     matches, EAX
 
     mov     ECX, 0
-    PrintuArray:
+    PrintUserGuess:
         push    ECX
-        push    OFFSET uArray
-        push    TYPE uArray
+        push    OFFSET user_guess
+        push    TYPE user_guess
         call    ArrayAt
         mov     helperVar1, EAX
 
         push    ECX
-        push    OFFSET solArray
-        push    TYPE solArray
+        push    OFFSET solution
+        push    TYPE solution
         call    ArrayAt
         mov     EBX, helperVar1
         cmp     EBX, EAX
@@ -697,8 +697,8 @@ CheckSimilar PROC
             mov     EBX, hits
             loop2ndArray:
                 push    EBX
-                push    OFFSET uArray
-                push    TYPE uArray
+                push    OFFSET user_guess
+                push    TYPE user_guess
                 call    ArrayAt
                 cmp     EAX, helperVar1
                 JE      isAMatch
@@ -714,11 +714,11 @@ CheckSimilar PROC
 
         outOfisThisInArray:
             cmp     ECX, 3
-            JE      outOfPrintuArray
+            JE      outOfPrintUserGuess
             add     ECX, 1
-            JMP     PrintuArray
+            JMP     PrintUserGuess
 
-outOfPrintuArray:
+outOfPrintUserGuess:
     mov     EBX, [EBP + 8]
     mov     EAX, hits
     mov     [EBX], EAX      ; saving to hits variable
