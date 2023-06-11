@@ -249,60 +249,191 @@ main PROC; (insert executable instructions here)
 
 
 ; --------------------------------------------------------
-setup:
+ProgramSetup:
 ;
-; Runs functions that set the environment to expected
+; Runs functions that set the environment to expected parameters,
+; seeds the random number generator, initiates the FPU, sets the
+; text and background color
 ; --------------------------------------------------------
-finit
-call            Randomize
+    finit
+    call            Randomize
 
-push            8
-call            SetColorFromPalette
+    push            8
+    call            SetColorFromPalette
+
 
 ; --------------------------------------------------------
-gameplay:
+InitialGreeting:
 ;
-; Runs the gameloop TODO contains test code right now
+; Prompts the user for their name then greets them
 ; --------------------------------------------------------
 
-mov ECX, 10
-_debug:
-    mArand 1, 3, EBX
-    loop _debug
-
-call            DrawNewGameboard
-
-mPlacePeg       7, 7, 2
-mPlacePeg       7, 9, 5
-mPlacePeg       7, 11, 1
-mPlacePeg       7, 13, 4
-
-mPlaceFeedback  7, 4, HIT
-mPlaceFeedback  8, 4, BLOW
-mPlaceFeedback  7, 5, BLOW
-
-push            FALSE
-push            TYPE solution
-push            OFFSET solution
-call            GenerateCode
-
-call            PrintSolution
+    ; TODO PROC get user's name
+    ; TODO PROC greet user
 
 
-push            OFFSET user_guess
-call            GetUserCode
+; --------------------------------------------------------
+PromptForRules:
+;
+; Prompts the user asking if they would like the rules of the
+; game to be displayed
+; --------------------------------------------------------
+
+    ; TODO PROC prompt user YES/NO (will be used elsewhere, design modular procedure)
+    ; TODO use that procedure to ask
+    ; TODO if NO/SKIP, then jmp to NewGamestate
 
 
-; End of program steps
-mGotoXY         1, 20
+; --------------------------------------------------------
+DisplayRules:
+;
+; Prints the rules of the game and then waits for the user to
+; press a key before continuing, to give them a chance to read
+; --------------------------------------------------------
 
-push            8
-call            SetColorFromPalette
+    ; TODO write up rules strings (extra cool: file IO)
+    ; TODO use Irvine lib WaitMsg (or something) after printing
+    ; TODO EXTRA we could have two different messages, the initial
+    ;           print which goes into detail and a subsequent version
+    ;           which is less verbose
 
-; comparing user_guess and solution elements - updates hits and blows
-push            OFFSET blows
-push            OFFSET hits
-call            CheckSimilar
+
+; --------------------------------------------------------
+; TODO IFF hasWon is TRUE
+PromptForDuplicates:
+;
+; Allow the user to choose if they want to allow duplicate
+; colors in the code, let user know that there may be more
+; than two of any given color if they agree.
+
+    ; TODO create a variable to store the user's choice
+    ; TODO prompt the user
+
+
+; --------------------------------------------------------
+NewGamestate:
+;
+; Print a new gameboard, set the round to zero, and generate a new
+; solution code
+; --------------------------------------------------------
+
+    call            DrawNewGameboard
+    mov             current_round, 0
+
+    push            FALSE
+    push            TYPE solution
+    push            OFFSET solution
+    call            GenerateCode
+
+; --------------------------------------------------------
+mov                 ECX, ROUNDS
+GameTurn:
+;
+; Get the user's input, check against the solution, give the
+; user feedback, and repeat until the user is out of turns or
+; guesses the solution
+; --------------------------------------------------------
+
+    ; Get input from the user
+    push            OFFSET user_guess
+    call            GetUserCode
+
+    ; TODO store the guess in the game_matrix
+
+    ; Check the user's move against solution
+    push            OFFSET blows
+    push            OFFSET hits
+    call            CheckSimilar
+
+    ; TODO draw user feedback
+
+    ; TODO IF HITS == 4, jmp to WinnerCelebration
+
+    ; TODO IF ROUND > ROUNDS, jmp to LoserAdmonishment
+
+    ; If no endgame conditions are met, the user takes another turn
+    inc             current_round
+    loop            GameTurn
+
+
+; --------------------------------------------------------
+WinnerCelebration:
+;
+; Notify the user that they have won
+; --------------------------------------------------------
+
+    ; TODO write a celebration
+    ; TODO create a variable 'hasWon'
+    ; TODO set hasWon to TRUE
+
+
+; --------------------------------------------------------
+LoserAdmonishment:
+;
+; Notify the user that they are a loser
+; --------------------------------------------------------
+
+    ; TODO write an admonishment
+
+
+; --------------------------------------------------------
+PromptForPlayAgain:
+;
+; Prompt the user to play the game again
+; --------------------------------------------------------
+
+    ; TODO prompt
+    ; TODO if yes, jmp to NewGamestate
+    ; TODO else, farewell
+
+
+
+;   jmp noTesting
+;   --------------------------------------------------------
+;   testing:
+;   ;
+;   ; contains test code
+;   ; --------------------------------------------------------
+;
+;   mov ECX, 10
+;   _debug:
+;       mArand 1, 3, EBX
+;       loop _debug
+;
+;   call            DrawNewGameboard
+;
+;   mPlacePeg       7, 7, 2
+;   mPlacePeg       7, 9, 5
+;   mPlacePeg       7, 11, 1
+;   mPlacePeg       7, 13, 4
+;
+;   mPlaceFeedback  7, 4, HIT
+;   mPlaceFeedback  8, 4, BLOW
+;   mPlaceFeedback  7, 5, BLOW
+;
+;   push            FALSE
+;   push            TYPE solution
+;   push            OFFSET solution
+;   call            GenerateCode
+;
+;   call            PrintSolution
+;
+;
+;   push            OFFSET user_guess
+;   call            GetUserCode
+;
+;
+;   ; End of program steps
+;   mGotoXY         1, 20
+;
+;   push            8
+;   call            SetColorFromPalette
+;
+;   ; comparing user_guess and solution elements - updates hits and blows
+;   push            OFFSET blows
+;   push            OFFSET hits
+;   call            CheckSimilar
+;   noTesting:
 
 invoke EXITProcess, 0		; exit to operating system
 main ENDP
