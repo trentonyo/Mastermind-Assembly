@@ -460,6 +460,7 @@ LoserAdmonishment:
 ; Author: Hla Htun
 ; Notify the user that they are a loser
 ; --------------------------------------------------------
+    call PrintSolution
     mGotoXY     1, 19
     mPrint      Loser
     JMP         PromptForPlayAgain
