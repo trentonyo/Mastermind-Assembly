@@ -221,7 +221,7 @@ MAP_text_color              DWORD       white,      white,      black,      whit
 ; (Localizations)           Define any messages to be displayed here
 
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
-selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
+selectColor    				BYTE		"Select a color for a peg using the right and left arrow keys, traverse up or down the board using the up and down arrow keys, and hit enter to submit your final pegs.", CR, LF, 0
 
 ; (Gamestate)               Variables defining gameplay
 
@@ -255,6 +255,13 @@ currX                       DWORD       15              ; Helper var for GetUser
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 
+;   FPU AND RECURSIVE REQUIREMENT STRINGS
+FPU_intro_string		BYTE   	"Let's do some FPU addition to start.", 10, 13, 0
+FPU_getUserFirstNum 	BYTE 	"Please type your first real number: ", 10, 13, 0
+FPU_getUserSecNum 		BYTE 	"Please type your second real number: ", 10, 13, 0
+FPU_result 				BYTE 	"The sum of the two real numbers is: ", 10, 13, 0
+REC_intro 				BYTE 	"Now let's recursively sum the numbers 1-10!", 10, 13, 0
+REC_final				DWORD 	?
 
 .code
 main PROC; (insert executable instructions here)
@@ -952,5 +959,52 @@ pop             EAX
 pop             EBP
 ret 4
 GetUserCode ENDP
+
+
+; -------------------------------------------------------- -
+AddFPU PROC
+; Author:           Brayden Aldrich
+; Description:      Gets two real numbers from user and calculates their sum
+;
+; Parameters:       Call AddFPU
+;                   
+; Postconditions:   Sum outputted on console
+; -------------------------------------------------------- -
+
+finit
+mov 	EDX, OFFSET FPU_intro_string
+call 	WriteString
+mov 	EDX, OFFSET FPU_getUserFirstNum
+call 	WriteString
+call 	ReadFloat
+mov 	EDX, OFFSET FPU_getUserSecNum
+call 	WriteString
+call 	ReadFloat
+FADD 	ST(0), ST(1)
+call 	WriteFloat
+
+ret
+AddFPU  ENDP
+
+; -------------------------------------------------------- -
+RSum PROC
+; Author:           Brayden Aldrich
+; Description:      Sums numbers [0...n] recursively.
+;
+; Parameters:       push EAX    - set eax to 0
+;                   push ECX    - set ecx to n
+;                   call RSum
+;                   
+; Postconditions:   Call Writedec to see output on console.
+; -------------------------------------------------------- -
+cmp 		ECX, 0
+jz 			_end
+add 		EAX, ECX
+dec 		ECX
+call 		RSum
+_end:
+mov 		REC_final, EAX
+ret 4
+RSum endp
 
 END main
