@@ -220,8 +220,15 @@ MAP_text_color              DWORD       white,      white,      black,      whit
 
 ; (Localizations)           Define any messages to be displayed here
 
+YES                         BYTE        "y"
+NO                          BYTE        "n"
+
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
+invalidCharMsg              BYTE        "Invalid input, try again.", 0
+
+prompt_rules                BYTE        "Would you like me to tell you the rules of MASTERMIND? (y/n)", 0
+prompt_duplicates           BYTE        "Would you like to allow duplicates in the solution code?", CR, LF, "WARNING: This significantly increases the challenge of the game. (y/n)", 0
 
 ; (Gamestate)               Variables defining gameplay
 
@@ -231,6 +238,9 @@ solution                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)
 game_matrix                 DWORD       CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
 user_guess                  DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)
+
+userHasWon                  DWORD       FALSE
+allowDuplicates             DWORD       FALSE
 
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       0
@@ -279,10 +289,12 @@ PromptForRules:
 ; game to be displayed
 ; --------------------------------------------------------
 
-    ; TODO PROC prompt user YES/NO (will be used elsewhere, design modular procedure)
-    ; TODO use that procedure to ask
-    ; TODO if NO/SKIP, then jmp to NewGamestate
+    push            OFFSET prompt_rules
+    call            PromptMsg
 
+    ; If the user does not want the rules displayed
+    cmp             EAX, FALSE
+    je              NewGamestate
 
 ; --------------------------------------------------------
 DisplayRules:
@@ -299,16 +311,21 @@ DisplayRules:
 
 
 ; --------------------------------------------------------
-; TODO IFF hasWon is TRUE
+; If the user has won the game, then they may allow for duplicates
+; in the solution code
+cmp             userHasWon, TRUE
+jne             NewGameState
 PromptForDuplicates:
 ;
 ; Allow the user to choose if they want to allow duplicate
 ; colors in the code, let user know that there may be more
 ; than two of any given color if they agree.
 
-    ; TODO create a variable to store the user's choice
-    ; TODO prompt the user
+    push        OFFSET prompt_duplicates
+    call        PromptMsg
 
+    ; Store the user's decision
+    mov         allowDuplicates, EAX
 
 ; --------------------------------------------------------
 NewGamestate:
@@ -1071,5 +1088,79 @@ pop             EAX
 pop             EBP
 ret 4
 GetUserCode ENDP
+
+
+; -------------------------------------------------------- -
+PromptMsg PROC
+; Author:           Trenton Young
+; Description:      Gets the user's input in the form of text
+;                   input and then stores the corresponding
+;                   boolean value in EAX
+;
+; Parameters:       push OFFSET message
+;                   call
+;
+; Postconditions:   EAX will contain the TRUE or FALSE
+; -------------------------------------------------------- -
+push                EBP
+mov                 EBP, ESP
+
+push                ECX
+push                EDX
+
+; Set text color to default
+push                8
+call                SetColorFromPalette
+
+_stackFrame:
+    mov             EDX, [EBP + 8]          ; OFFSET message
+
+call                WriteString
+call                Crlf
+
+jmp _endInvalid
+_invalid:
+    ; Set to error message color
+    push            10
+    call            SetColorFromPalette
+
+    mov             EDX, OFFSET invalidCharMsg
+    call            WriteString
+    call            Crlf
+
+    push            8
+    call            SetColorFromPalette
+_endInvalid:
+
+call                ReadChar
+
+movzx               EDX, YES
+movzx               ECX, AL
+cmp                 EDX, ECX
+je                  _true
+
+movzx               EDX, NO
+movzx               ECX, AL
+cmp                 EDX, ECX
+je                  _false
+
+jmp                 _invalid
+
+_true:
+    mov             EAX, TRUE
+    jmp             _end
+
+_false:
+    mov             EAX, FALSE
+
+_end:
+
+pop                 EDX
+pop                 ECX
+
+pop                 EBP
+
+ret 4
+PromptMsg ENDP
 
 END main
