@@ -251,10 +251,22 @@ helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
-currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
+currX                       DWORD       7              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 
+; Game Rules
+RULES_1                     BYTE        CR, LF, "Rules:", CR, LF, 0
+RULES_GAP                   BYTE        "    - ", 0
+RULES_2                     BYTE        "The program randomly places 4 pegs in a certain order", CR, LF, 0
+RULES_3                     BYTE        "Your goal is to guess the exact positions and colors of each of those pegs before you run out of attempts!", CR, LF, 0
+RULES_4                     BYTE        "You'll make guesses by selecting colors from a choice of 8 (red, gray, green, blue, yellow, cyan, magenta, brown)", CR, LF, 0
+RULES_5                     BYTE        "Use ( <- ) left or ( -> ) right arrow keys to switch between different color choices", CR, LF, 0
+RULES_6                     BYTE        "Use Enter/Return key to confirm your choice", CR, LF, 0
+RULES_7                     BYTE        "You can also ( ", 24, " ) up or ( " , 25, " ) down arrow keys to go back and forth between input fields", CR, LF, 0
+RULES_8                     BYTE        "Correct guess (right color and position) also known as a 'hit' will be displayed as 'o'", CR, LF, 0
+RULES_9                     BYTE        "Semi-correct guess (right color but not position) also known as a 'blow' will be displayed as '*'", CR, LF, 0
+RULES_10                    BYTE        "Wrong guess also known as a 'miss' will be displayed as '.'", CR, LF, LF, 0
 
 .code
 main PROC; (insert executable instructions here)
@@ -294,31 +306,53 @@ PromptForRules:
     push            OFFSET prompt_rules
     call            PromptMsg
 
-    ; If the user does not want the rules displayed
+;   If the user does not want the rules displayed
     cmp             EAX, FALSE
     je              NewGamestate
+    JMP             DisplayRules
+;    JMP             PromptForPlayAgain
 
 ; --------------------------------------------------------
 DisplayRules:
-;
+; Author: Hla Htun
 ; Prints the rules of the game and then waits for the user to
 ; press a key before continuing, to give them a chance to read
 ; --------------------------------------------------------
 
-    ; TODO write up rules strings (extra cool: file IO)
-    ; TODO use Irvine lib WaitMsg (or something) after printing
-    ; TODO EXTRA we could have two different messages, the initial
+    ; TODO EXTRA: file IO the rules
+    ; TODO EXTRA: we could have two different messages, the initial
     ;           print which goes into detail and a subsequent version
     ;           which is less verbose
+    mPrint      OFFSET RULES_1
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_2
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_3
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_4
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_5
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_6
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_7
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_8
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_9
+    mPrint      OFFSET RULES_GAP
+    mPrint      OFFSET RULES_10
 
-
+    call        WaitMsg
+    call        Crlf
+    call        Crlf
 ; --------------------------------------------------------
 ; If the user has won the game, then they may allow for duplicates
 ; in the solution code
 NewGamestate:
-cmp                 userHasWon, TRUE
-jne                 NewGameState
-PromptForDuplicates:
+;cmp                 userHasWon, TRUE
+;jne                 NewGameState
+;PromptForDuplicates:
 ;
 ; Allow the user to choose if they want to allow duplicate
 ; colors in the code, let user know that there may be more
@@ -374,6 +408,8 @@ GameTurn:
 
     ; If no endgame conditions are met, the user takes another turn
     inc             current_round
+    add             currX, 8
+    mov             currIndex, 0
     loop            GameTurn
 
 
@@ -421,39 +457,39 @@ PromptForPlayAgain:
 ;       mArand 1, 3, EBX
 ;       loop _debug
 ;
-;   call            DrawNewGameboard
-;
-;   mPlacePeg       7, 7, 2
-;   mPlacePeg       7, 9, 5
-;   mPlacePeg       7, 11, 1
-;   mPlacePeg       7, 13, 4
-;
-;   mPlaceFeedback  7, 4, HIT
-;   mPlaceFeedback  8, 4, BLOW
-;   mPlaceFeedback  7, 5, BLOW
-;
-;   push            FALSE
-;   push            TYPE solution
-;   push            OFFSET solution
-;   call            GenerateCode
-;
-;   call            PrintSolution
-;
-;
-;   push            OFFSET user_guess
-;   call            GetUserCode
-;
-;
-;   ; End of program steps
-;   mGotoXY         1, 20
-;
-;   push            8
-;   call            SetColorFromPalette
-;
-;   ; comparing user_guess and solution elements - updates hits and blows
-;   push            OFFSET blows
-;   push            OFFSET hits
-;   call            CheckSimilar
+   call            DrawNewGameboard
+
+   mPlacePeg       7, 7, 2
+   mPlacePeg       7, 9, 5
+   mPlacePeg       7, 11, 1
+   mPlacePeg       7, 13, 4
+
+   mPlaceFeedback  7, 4, HIT
+   mPlaceFeedback  8, 4, BLOW
+   mPlaceFeedback  7, 5, BLOW
+
+   push            FALSE
+   push            TYPE solution
+   push            OFFSET solution
+   call            GenerateCode
+
+   call            PrintSolution
+
+
+   push            OFFSET user_guess
+   call            GetUserCode
+
+
+   ; End of program steps
+   mGotoXY         1, 20
+
+   push            8
+   call            SetColorFromPalette
+
+   ; comparing user_guess and solution elements - updates hits and blows
+   push            OFFSET blows
+   push            OFFSET hits
+   call            CheckSimilar
 ;   noTesting:
 
 invoke EXITProcess, 0		; exit to operating system
@@ -811,6 +847,9 @@ CheckSimilar PROC
     mov     [EBX], EAX      ; initializing blows variable
     mov     matches, EAX
 
+    ; two loop counters
+    ; ECX => i
+    ; EBX => j
     mov     ECX, 0
     PrintUserGuess:
         push    ECX
@@ -831,8 +870,6 @@ CheckSimilar PROC
             add hits, 1
 
         notAHit:
-            ; ECX => i
-            ; EBX => j
             mov     helperVar1, EAX
             mov     EBX, hits
             loop2ndArray:
@@ -943,8 +980,8 @@ GetUserCode PROC
 ; Helper Variables: currX, currIndex, user_guess
 ;
 ; Parameters:       push OFFSET array
-;                   call 
-;                   
+;                   call
+;
 ; Postconditions:   Updated user_guess
 ; -------------------------------------------------------- -
 push            EBP
@@ -956,26 +993,26 @@ push            ECX
 push            EDX
 
 _init_variables:
-    mov             EDI, [EBP + 8]      ; Array offset 
+    mov             EDI, [EBP + 8]      ; Array offset
     mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be displayed.
     mov             ECX, 0
     mov             [EDI], ECX
     mov             [EDI + 4], ECX
     mov             [EDI + 8], ECX
     mov             [EDI + 12], ECX
-    
-    
+
+
 _string:
     mPrint          selectColor
 
 
 
-; Initialize the screen and ECX to show a color before the user hits the arrow keys. 
+; Initialize the screen and ECX to show a color before the user hits the arrow keys.
 _preloop:
 
 mov             EBX, currY              ; init current y
 mov             EAX, currX              ; init current x
-mov             ECX, [EDI] 
+mov             ECX, [EDI]
 mPlacePeg       al, bl, ECX             ; place peg on coordinate
 
 ;  loop until user inputs a code
@@ -1013,16 +1050,16 @@ add             ECX, 1                  ; increment color map
 cmp             ECX, 8                  ; check if current index is too high
 
 jge             _resetHigh
-jmp             _getColorHigh   
+jmp             _getColorHigh
 
-    _resetHigh: 
+    _resetHigh:
     mov             ECX, 0              ; reset the color map to 0
     _getColorHigh:
     mov             EAX, currX          ; move the current x index into EAX so mPlacePeg can use AL
     mov             EBX, currY          ; move current y index into EBX so mPlacePeg can use BL
     mPlacePeg       al, bl, ECX
     mov             [EDI], ECX          ; mov current color into array[n]
-                                        
+
 jmp             _loop                   ; Loop until a new key press
 
 _decrease:
@@ -1038,14 +1075,14 @@ jmp             _getColorLow
     mov             EBX, currY          ; move current y index to EBX to be used in mPlacePeg
     mPlacePeg       al, bl, ECX
     mov             [EDI], ECX          ; mov current color into array[n]
-                                        
+
 jmp             _loop                   ; Loop until a new key press
 
 _enter:
 
 cmp             currIndex, 3            ; Check if 4th peg
 je              _onlyEnter              ; jump to check if downkey pressed
-jmp             _break                  ; else continue on 
+jmp             _break                  ; else continue on
 _onlyEnter:
     cmp             EDX, 40             ; Check if downkey was pressed
     je              downKey             ; if so, jump to downKey
@@ -1113,8 +1150,8 @@ push                ECX
 push                EDX
 
 ; Set text color to default
-push                8
-call                SetColorFromPalette
+;push                8
+;call                SetColorFromPalette
 
 _stackFrame:
     mov             EDX, [EBP + 8]          ; OFFSET message
