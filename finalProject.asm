@@ -225,16 +225,16 @@ NO                          BYTE        "n"
 
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
-invalidCharMsg              BYTE        "Invalid input, try again.", 0
+invalidCharMsg              BYTE        "Invalid input, try again.", LF, 0
 
 rules_placeholder           BYTE        "Them's the rules.", CR, LF, 0
 
 prompt_rules                BYTE        "Would you like me to tell you the rules of MASTERMIND? (y/n)", 0
-prompt_duplicates           BYTE        "Would you like to allow duplicates in the solution code?", CR, LF, "WARNING: This significantly increases the challenge of the game. (y/n)", 0
+prompt_duplicates           BYTE        "Would you like to allow duplicates in the solution code?", CR, LF, "   WARNING: This significantly increases the challenge of the game. (y/n)", 0
 
 ; (Gamestate)               Variables defining gameplay
 
-current_round               BYTE        0
+current_round               DWORD        0
 
 solution                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)
 game_matrix                 DWORD       CODE_LENGTH DUP(ROUNDS DUP(?))
@@ -251,7 +251,7 @@ helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
-currX                       DWORD       7              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
+currX                       DWORD       7               ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 
@@ -268,6 +268,21 @@ RULES_8                     BYTE        "Correct guess (right color and position
 RULES_9                     BYTE        "Semi-correct guess (right color but not position) also known as a 'blow' will be displayed as '*'", CR, LF, 0
 RULES_10                    BYTE        "Wrong guess also known as a 'miss' will be displayed as '.'", CR, LF, LF, 0
 
+H_HelperVar1                DWORD       ?               ; Helper var for GameTurn (Place feedback loop counter)
+H_HelperVar2                DWORD       ?               ; Helper var for GameTurn (Place feedback loop counter)
+H_HelperVarX                DWORD       ?               ; Helper var for GameTurn - Holds the x coordinate for placing the feedback
+H_HelperVarY                DWORD       ?               ; Helper var for GameTurn - Holds the y coordinate for placing the feedback
+H_HelperVarMovY             DWORD       ?               ; Helper var for GameTurn - Helps decide whether to reset X to original position or not and increment Y by 1
+
+hasWon                      DWORD       ?
+
+Celebration                 BYTE        "   Great job! You correctly guessed the color and position of each of the pegs!", CR, LF, 0
+
+Loser                       BYTE        "   Uh..oh! You've ran out of attempts :(", CR, LF, 0
+
+prompt_tryAgain             BYTE        "   Would you like to try again? (y/n)", CR, LF, 0
+
+farewell                    BYTE        LF, "Thank you for playing our game!" , LF, "Programmed by Trenton Young, Brayden, Hla Htun and Cameron Kroeker", LF, LF, 0
 .code
 main PROC; (insert executable instructions here)
 
@@ -344,12 +359,11 @@ DisplayRules:
     mPrint      OFFSET RULES_10
 
     call        WaitMsg
-    call        Crlf
-    call        Crlf
+    call        Clrscr
 ; --------------------------------------------------------
 ; If the user has won the game, then they may allow for duplicates
 ; in the solution code
-NewGamestate:
+NewGameState:
 ;cmp                 userHasWon, TRUE
 ;jne                 NewGameState
 ;PromptForDuplicates:
@@ -357,6 +371,16 @@ NewGamestate:
 ; Allow the user to choose if they want to allow duplicate
 ; colors in the code, let user know that there may be more
 ; than two of any given color if they agree.
+    ; reset all variables to its initial state
+    mov             H_HelperVar1, 0
+    mov             H_HelperVar2, 0
+    mov             H_HelperVarX, 7
+    mov             H_HelperVarY, 4
+    mov             H_HelperVarMovY, 0
+    mov             hasWon, 0
+    mov             currX, 7
+    mov             currY, 7
+    mov             currIndex, 0
 
     push            OFFSET prompt_duplicates
     call            PromptMsg
@@ -393,18 +417,27 @@ GameTurn:
     push            OFFSET user_guess
     call            GetUserCode
 
-    ; TODO store the guess in the game_matrix
-
     ; Check the user's move against solution
     push            OFFSET blows
     push            OFFSET hits
     call            CheckSimilar
 
-    ; TODO draw user feedback
+    ; TODO store the guess in the game_matrix
 
-    ; TODO IF HITS == 4, jmp to WinnerCelebration
 
-    ; TODO IF ROUND > ROUNDS, jmp to LoserAdmonishment
+    ; Draws feedbacks
+    push            ECX
+    call            PlaceFeedbackGameTurn
+
+    ; Debug for PlaceFeedbackGameTurn and CheckSimilar
+    ;mGotoXY         1, 25
+    ;call            debugHH
+
+    cmp             hits, 4
+    JE              WinnerCelebration
+
+    cmp             current_round, 7
+    JE              LoserAdmonishment
 
     ; If no endgame conditions are met, the user takes another turn
     inc             current_round
@@ -415,82 +448,35 @@ GameTurn:
 
 ; --------------------------------------------------------
 WinnerCelebration:
-;
+; Author: Hla Htun
 ; Notify the user that they have won
 ; --------------------------------------------------------
-
-    ; TODO write a celebration
-    ; TODO create a variable 'hasWon'
-    ; TODO set hasWon to TRUE
-
-
+    mGotoXY     1, 19
+    mPrint      Celebration
+    mov         hasWon, TRUE
+    JMP         PromptForPlayAgain
 ; --------------------------------------------------------
 LoserAdmonishment:
-;
+; Author: Hla Htun
 ; Notify the user that they are a loser
 ; --------------------------------------------------------
-
-    ; TODO write an admonishment
-
+    mGotoXY     1, 19
+    mPrint      Loser
+    JMP         PromptForPlayAgain
 
 ; --------------------------------------------------------
 PromptForPlayAgain:
-;
+; Author: Hla Htun
 ; Prompt the user to play the game again
 ; --------------------------------------------------------
+    push        OFFSET prompt_tryAgain
+    call        PromptMsg
 
-    ; TODO prompt
-    ; TODO if yes, jmp to NewGamestate
-    ; TODO else, farewell
+    cmp         EAX, TRUE
+    JE          ProgramSetup
 
-
-
-;   jmp noTesting
-;   --------------------------------------------------------
-;   testing:
-;   ;
-;   ; contains test code
-;   ; --------------------------------------------------------
-;
-;   mov ECX, 10
-;   _debug:
-;       mArand 1, 3, EBX
-;       loop _debug
-;
-   call            DrawNewGameboard
-
-   mPlacePeg       7, 7, 2
-   mPlacePeg       7, 9, 5
-   mPlacePeg       7, 11, 1
-   mPlacePeg       7, 13, 4
-
-   mPlaceFeedback  7, 4, HIT
-   mPlaceFeedback  8, 4, BLOW
-   mPlaceFeedback  7, 5, BLOW
-
-   push            FALSE
-   push            TYPE solution
-   push            OFFSET solution
-   call            GenerateCode
-
-   call            PrintSolution
-
-
-   push            OFFSET user_guess
-   call            GetUserCode
-
-
-   ; End of program steps
-   mGotoXY         1, 20
-
-   push            8
-   call            SetColorFromPalette
-
-   ; comparing user_guess and solution elements - updates hits and blows
-   push            OFFSET blows
-   push            OFFSET hits
-   call            CheckSimilar
-;   noTesting:
+_Farewell:
+    mPrint      farewell
 
 invoke EXITProcess, 0		; exit to operating system
 main ENDP
@@ -868,6 +854,7 @@ CheckSimilar PROC
         JMP     notAHit
         isAHit:
             add hits, 1
+            JMP outOfisThisInArray
 
         notAHit:
             mov     helperVar1, EAX
@@ -901,7 +888,7 @@ outOfPrintUserGuess:
     mov     [EBX], EAX      ; saving to hits variable
 
     mov     EAX, matches
-    sub     EAX, hits
+
     mov     EBX, [EBP + 12]
     mov     [EBX], EAX      ; saving to blows variable
 
@@ -1204,4 +1191,194 @@ pop                 EBP
 ret 4
 PromptMsg ENDP
 
+; -------------------------------------------------------- -
+PlaceFeedbackGameTurn PROC
+; Author:           Hla Htun
+; Description:      Places the feedback for specific round
+;
+; Parameters:       push    current_round         ; this is the nth round
+;                   call
+;
+; Postconditions:   Feedbacks will be displayed on the GameBoard
+;                   for that specific round
+; -------------------------------------------------------- -
+    push        EBP
+    mov         EBP, ESP
+    push        ECX
+    push        EBX
+    push        EAX
+
+;    mGotoXY     1, 25
+;    mov         AL, 'C'
+;    call        WriteChar
+    mov         EAX, [EBP + 8]
+;    call        WriteDec
+;    call        Crlf
+
+    cmp         EAX, 8
+    JE          _roundOne
+    cmp         EAX, 7
+    JE          _roundTwo
+    cmp         EAX, 6
+    JE          _roundThree
+    cmp         EAX, 5
+    JE          _roundFour
+    cmp         EAX, 4
+    JE          _roundFive
+    cmp         EAX, 3
+    JE          _roundSix
+    cmp         EAX, 2
+    JE          _roundSeven
+    JMP         _roundEight
+
+    _roundOne:
+        mov     H_HelperVarX, 7
+        JMP     _printDraft
+    _roundTwo:
+        mov     H_HelperVarX, 15
+        JMP     _printDraft
+    _roundThree:
+        mov     H_HelperVarX, 23
+        JMP     _printDraft
+    _roundFour:
+        mov     H_HelperVarX, 31
+        JMP     _printDraft
+    _roundFive:
+        mov     H_HelperVarX, 39
+        JMP     _printDraft
+    _roundSix:
+        mov     H_HelperVarX, 47
+        JMP     _printDraft
+    _roundSeven:
+        mov     H_HelperVarX, 55
+        JMP     _printDraft
+    _roundEight:
+        mov     H_HelperVarX, 63
+        JMP     _printDraft
+
+    _printDraft:
+        mov     H_HelperVarY, 4
+        mov     H_HelperVarMovY, 0
+        cmp     hits, 0
+        JE      _outofPrintHitsHH
+
+        mov     EBX, 0
+        _printHitsHH:
+            cmp     H_HelperVarMovY, 2
+            JL      _continue1HH
+            inc     H_HelperVarY
+            sub     H_HelperVarX, 2
+            mov     H_HelperVarMovY, 0
+            _continue1HH:
+                mPlaceFeedback H_HelperVarX, H_HelperVarY, HIT
+                inc     H_HelperVarX
+                inc     H_HelperVarMovY
+
+            inc EBX
+            cmp EBX, hits
+            JGE _outofPrintHitsHH
+            JMP _printHitsHH
+        _outofPrintHitsHH:
+
+        mov     H_HelperVarY, 4
+        mov     H_HelperVarMovY, 0
+        cmp     blows, 0
+        JE      _outofPrintBlowsHH
+        mov     EBX, 0
+        _printBlowsHH:
+            cmp     H_HelperVarMovY, 2
+            JL      _continue2HH
+            inc     H_HelperVarY
+            sub     H_HelperVarX, 2
+            mov     H_HelperVarMovY, 0
+            _continue2HH:
+                mPlaceFeedback H_HelperVarX, H_HelperVarY, BLOW
+                inc     H_HelperVarX
+                inc     H_HelperVarMovY
+
+            inc EBX
+            cmp EBX, blows
+            JGE _outofPrintBlowsHH
+            JMP _printBlowsHH
+        _outofPrintBlowsHH:
+
+
+    _outofPrintDraft:
+        mov H_HelperVarY, 4
+
+    pop         EAX
+    pop         EBX
+    pop         ECX
+    pop         EBP
+    ret
+PlaceFeedbackGameTurn ENDP
+
+
+debugHH     PROC
+    push    ECX
+    push    EAX
+
+    mov     AL, 'R'
+    call    WriteChar
+    mov     EAX, current_round
+    add     EAX, 1
+    call    WriteDec
+    call    Crlf
+    mov     ECX, 0
+    _printHH:
+         push       ECX
+         push       OFFSET user_guess
+         push       TYPE user_guess
+         call       ArrayAt
+         call       WriteDec
+         mov        AL, '-'
+         call       WriteChar
+         cmp        ECX, 3
+         JE         _outofPrintHH
+         inc        ECX
+         JMP        _printHH
+    _outofPrintHH:
+        call        Crlf
+
+
+    mov     ECX, 0
+    _printHH2:
+         push       ECX
+         push       OFFSET solution
+         push       TYPE solution
+         call       ArrayAt
+         call       WriteDec
+         mov        AL, '-'
+         call       WriteChar
+         cmp        ECX, 3
+         JE         _outofPrintHH2
+         inc        ECX
+         JMP        _printHH2
+    _outofPrintHH2:
+        call        Crlf
+
+
+    mGotoXY         1, 22
+    _printHH3:
+        mov     AL, 'H'
+        call    WriteChar
+        mov     EAX, hits
+        call    WriteDec
+        call    Crlf
+
+        mov     AL, 'B'
+        call    WriteChar
+        mov     EAX, blows
+        call    WriteDec
+        call    Crlf
+
+    _outofPrintHH3:
+
+    _printHH4:
+
+    _outofPrintHH4:
+    pop     EAX
+    pop     ECX
+ret
+debugHH     ENDP
 END main
