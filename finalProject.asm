@@ -1382,3 +1382,64 @@ debugHH     PROC
 ret
 debugHH     ENDP
 END main
+; -------------------------------------------------------- -
+getName PROC
+; Author:           Cameron Kroeker
+; Description:      Gets the user's input in the form of string
+;                   and stores in DWORD Uname
+;
+; Parameters:       needs a variable DWORD named Uname, needs a variable BYTE namePrompt, needs BYTE greeting
+;                   
+;
+; Postconditions:   Prompts the screen and set's Uname to userinput, then greets user with custom input.
+; -------------------------------------------------------- -
+
+     ;Uname DWORD ?
+     ;namePrompt BYTE "Please enter your name: ",0
+     ;greeting BYTE "Hello, "
+
+     getName:
+	mov	EDX, OFFSET namePrompt  		;move prompt1 to EDX			
+	call WriteString				;Print EDX to screen
+	call Crlf
+
+	call ReadString				;Get string from user and store into EDX
+	mov Uname, EDX					;Store String value into Uname variable
+	call Crlf	
+
+     greetUser:
+     mov EDX, OFFSET greeting					
+     call WriteString
+     mov EDX, OFFSET Uname
+     call WriteString
+     call Crlf
+     call Crlf
+
+ ret
+ getName ENDP
+
+
+ ; -------------------------------------------------------- -
+PromptForPlayAgain PROC
+; Author:           Cameron Kroeker
+; Description:      Prompt the user to play the game again
+;
+; Parameters:       needs a variable BYTE named promptPlayAgain
+;                   
+;
+; Postconditions:   Either starts a newgame or leaves/ends program
+; -------------------------------------------------------- -
+
+     ;promptPlayAgain    BYTE      "Would you like to play again?"
+     
+     mov	EDX, OFFSET promptPlayAgain  		;load prompt			
+	call WriteString	                    ;Print prompt
+     call ReadInt                            ;GetValue
+     cmp EAX, 1                              ;Check input
+     call Crlf
+
+     JE NewGamestate                         ;Start newgame
+	JNE farewell                            ;Leave
+
+    ret
+PromptForPlayAgain ENDP
