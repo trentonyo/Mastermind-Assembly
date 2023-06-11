@@ -222,8 +222,8 @@ MAP_text_color              DWORD       white,      white,      black,      whit
 
 YES                         BYTE        "y"
 NO                          BYTE        "n"
-
-greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
+greeting    				BYTE		"Let's play MASTERMIND, ", 0
+exclamation                 BYTE        "!", LF, LF, 0
 selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
 invalidCharMsg              BYTE        "Invalid input, try again.", LF, 0
 
@@ -283,6 +283,10 @@ Loser                       BYTE        "   Uh..oh! You've ran out of attempts :
 prompt_tryAgain             BYTE        "   Would you like to try again? (y/n)", CR, LF, 0
 
 farewell                    BYTE        LF, "Thank you for playing our game!" , LF, "Programmed by Trenton Young, Brayden, Hla Htun and Cameron Kroeker", LF, LF, 0
+
+prompt_userName             BYTE        "Please type your name: ", 0
+userName                    BYTE        ?
+
 .code
 main PROC; (insert executable instructions here)
 
@@ -306,11 +310,7 @@ InitialGreeting:
 ;
 ; Prompts the user for their name then greets them
 ; --------------------------------------------------------
-
-    ; TODO PROC get user's name
-    ; TODO PROC greet user
-
-
+    call            getName
 ; --------------------------------------------------------
 PromptForRules:
 ;
@@ -322,10 +322,10 @@ PromptForRules:
     call            PromptMsg
 
 ;   If the user does not want the rules displayed
+    call            Crlf
     cmp             EAX, FALSE
     je              NewGamestate
     JMP             DisplayRules
-;    JMP             PromptForPlayAgain
 
 ; --------------------------------------------------------
 DisplayRules:
@@ -1313,8 +1313,16 @@ PlaceFeedbackGameTurn PROC
     ret
 PlaceFeedbackGameTurn ENDP
 
-
+; -------------------------------------------------------- -
 debugHH     PROC
+; Author:           Hla Htun
+; Description:      Prints out user_guess and solution arrays
+;                   along with the round number, hits and blows
+;
+; Parameters:       mGotoXY   1, 25     ; needs to move cursor
+;                   call                ; below the GameBoard
+;
+; -------------------------------------------------------- -
     push    ECX
     push    EAX
 
@@ -1381,65 +1389,40 @@ debugHH     PROC
     pop     ECX
 ret
 debugHH     ENDP
-END main
+
 ; -------------------------------------------------------- -
 getName PROC
 ; Author:           Cameron Kroeker
 ; Description:      Gets the user's input in the form of string
 ;                   and stores in DWORD Uname
 ;
-; Parameters:       needs a variable DWORD named Uname, needs a variable BYTE namePrompt, needs BYTE greeting
+; Parameters:       needs a variable DWORD named userName,
+;                   needs variables BYTE prompt_userName,
+;                   and BYTE greeting
 ;                   
 ;
-; Postconditions:   Prompts the screen and set's Uname to userinput, then greets user with custom input.
+; Postconditions:   Prompts the screen and set's userName to userinput, then greets user with custom input.
 ; -------------------------------------------------------- -
 
      ;Uname DWORD ?
      ;namePrompt BYTE "Please enter your name: ",0
      ;greeting BYTE "Hello, "
+    push            8
+    call            SetColorFromPalette
 
-     getName:
-	mov	EDX, OFFSET namePrompt  		;move prompt1 to EDX			
-	call WriteString				;Print EDX to screen
-	call Crlf
+    _getName:
+	    mPrint  prompt_userName
+        mov     EDX, OFFSET userName
+        mov     ECX, 20             ; allowed size
+        call    ReadString          ; stores user name in userName
+        call    Clrscr
 
-	call ReadString				;Get string from user and store into EDX
-	mov Uname, EDX					;Store String value into Uname variable
-	call Crlf	
+    _greetUser:
+        mPrint     greeting
+        mPrint     userName
+        mPrint     exclamation
 
-     greetUser:
-     mov EDX, OFFSET greeting					
-     call WriteString
-     mov EDX, OFFSET Uname
-     call WriteString
-     call Crlf
-     call Crlf
+ret
+getName ENDP
 
- ret
- getName ENDP
-
-
- ; -------------------------------------------------------- -
-PromptForPlayAgain PROC
-; Author:           Cameron Kroeker
-; Description:      Prompt the user to play the game again
-;
-; Parameters:       needs a variable BYTE named promptPlayAgain
-;                   
-;
-; Postconditions:   Either starts a newgame or leaves/ends program
-; -------------------------------------------------------- -
-
-     ;promptPlayAgain    BYTE      "Would you like to play again?"
-     
-     mov	EDX, OFFSET promptPlayAgain  		;load prompt			
-	call WriteString	                    ;Print prompt
-     call ReadInt                            ;GetValue
-     cmp EAX, 1                              ;Check input
-     call Crlf
-
-     JE NewGamestate                         ;Start newgame
-	JNE farewell                            ;Leave
-
-    ret
-PromptForPlayAgain ENDP
+END main
