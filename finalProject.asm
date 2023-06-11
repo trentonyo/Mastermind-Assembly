@@ -926,7 +926,16 @@ outOfPrintUserGuess:
     mov     [EBX], EAX      ; saving to hits variable
 
     mov     EAX, matches
+    cmp     hits, EAX
+    JG      _resetBlowsHH
     sub     EAX, hits
+    JMP     _dontSubBlowsHH
+    _resetBlowsHH:
+        mov     EAX, 0
+    _dontSubBlowsHH:
+
+
+
     mov     EBX, [EBP + 12]
     mov     [EBX], EAX      ; saving to blows variable
 
