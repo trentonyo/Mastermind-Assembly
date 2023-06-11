@@ -1,4 +1,4 @@
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:19:27
 Mastermind			(AddTwo.asm		     Page 1 - 1
 
 
@@ -415,51 +415,29 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
 
  00000364 00			current_round               BYTE        0
 
- 00000365  00000004 [		solution                    DWORD        CODE_LENGTH DUP(OUT_OF_RANGE_2)
+ 00000365  00000004 [		solution                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)
 	    000000C8
 	   ]
- 00000375  00000004 [		game_matrix                 DWORD        CODE_LENGTH DUP(ROUNDS DUP(?))
+ 00000375  00000004 [		game_matrix                 DWORD       CODE_LENGTH DUP(ROUNDS DUP(?))
 	    00000008 [
 	     00000000
 	    ]
 	   ]
 				; Created for key inputs.Will hold current user's guess
- 000003F5  00000004 [		user_guess                  DWORD        CODE_LENGTH DUP(OUT_OF_RANGE_1)                     ; TODO consolidate arrays from test phase - Trenton Young
+ 000003F5  00000004 [		user_guess                  DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)
 	    00000064
 	   ]
 
 				; Hits and Blows            hits and blows will be stored in these variables
  00000405 00000000		hits                        DWORD       0
  00000409 00000000		blows                       DWORD       0
-				;user_guess                 DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
-				;solution                   DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
  0000040D 00000000		helperVar1                  DWORD       ?
  00000411 00000000		T_HelperVar                 DWORD       ?
  00000415 00000000		matches                     DWORD       ?
 
-				; Hits and Blows temporary helper variables   - feel free to delete after
- 00000419 43 6F 6D 70 61	msgHh1                      BYTE        "Comparing arrays", LF, 0
-	   72 69 6E 67 20
-	   61 72 72 61 79
-	   73 0A 00
- 0000042B 55 73 65 72 20	msgHh2                      BYTE        "User array: ", 0
-	   61 72 72 61 79
-	   3A 20 00
- 00000438 0A 53 6F 6C 75	msgHh3                      BYTE        LF, "Solution array: ", 0
-	   74 69 6F 6E 20
-	   61 72 72 61 79
-	   3A 20 00
- 0000044A 0A 68 69 74 73	msgHh4                      BYTE        LF, "hits: ", 0
-	   3A 20 00
- 00000452 0A 62 6C 6F 77	msgHh5                      BYTE        LF, "blows: ", 0
-	   73 3A 20 00
- 0000045B 20 00			msgSpace                    BYTE        " ", 0
-
-
- 0000045D			userArray                   DWORD       4 DUP(?)                                ; TODO consolidate arrays from test phase - Trenton Young
- 0000046D 0000000F		currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
- 00000471 00000007		currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
- 00000475 00000000		currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
+ 00000419 0000000F		currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
+ 0000041D 00000007		currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
+ 00000421 00000000		currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 
 
  00000000			.code
@@ -571,7 +549,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  000000D2  6A 01	     1	    push        BLOW
  000000D4  E8 000001F1	     1	    call        PlaceFeedback
 
- 000000D9  6A 01		push            TRUE
+ 000000D9  6A 00		push            FALSE
  000000DB  6A 04		push            TYPE solution
  000000DD  68 00000365 R	push            OFFSET solution
  000000E2  E8 000000C2		call            GenerateCode
@@ -579,7 +557,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  000000E7  E8 00000304		call            PrintSolution
 
 
- 000000EC  68 0000045D R	push            OFFSET userArray
+ 000000EC  68 000003F5 R	push            OFFSET user_guess
  000000F1  E8 000003AC		call            GetUserCode
 
 
@@ -1004,7 +982,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
 				;                   call
 				;
 				; Preconditions:    Must have user_guess and solution as global variables
-				;                   Both of the arrays must have a size of 4   TODO must they, though? - Trenton Young
+				;                   Both of the arrays must have a size of 4
 				;                   Additional global variables needed:
 				;                   helperVar1, matches
 				;
@@ -1205,14 +1183,14 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
 				; Author:           Brayden Aldrich
 				; Description:      Gets user inputs via arrow keys and the enter key,
 				;                   dynamically displays these choices, then stores desired color
-				;                   into userArray
+				;                   into user_guess
 				;
-				; Helper Variables: currX, currIndex, userArray
+				; Helper Variables: currX, currIndex, user_guess
 				;
 				; Parameters:       push OFFSET array
 				;                   call 
 				;                   
-				; Postconditions:   Updated userArray
+				; Postconditions:   Updated user_guess
 				; -------------------------------------------------------- -
  000004A2  55			push            EBP
  000004A3  8B EC		mov             EBP, ESP
@@ -1251,8 +1229,8 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
 				; Initialize the screen and ECX to show a color before the user hits the arrow keys. 
  000004D7			_preloop:
 
- 000004D7  8B 1D 00000471 R	mov             EBX, currY              ; init current y
- 000004DD  A1 0000046D R	mov             EAX, currX              ; init current x
+ 000004D7  8B 1D 0000041D R	mov             EBX, currY              ; init current y
+ 000004DD  A1 00000419 R	mov             EAX, currX              ; init current x
  000004E2  8B 0F		mov             ECX, [EDI] 
 				mPlacePeg       al, bl, ECX             ; place peg on coordinate
  000004E4  52		     2	    push        EDX
@@ -1309,8 +1287,8 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  00000551			    _resetHigh: 
  00000551  B9 00000000		    mov             ECX, 0              ; reset the color map to 0
  00000556			    _getColorHigh:
- 00000556  A1 0000046D R	    mov             EAX, currX          ; move the current x index into EAX so mPlacePeg can use AL
- 0000055B  8B 1D 00000471 R	    mov             EBX, currY          ; move current y index into EBX so mPlacePeg can use BL
+ 00000556  A1 00000419 R	    mov             EAX, currX          ; move the current x index into EAX so mPlacePeg can use AL
+ 0000055B  8B 1D 0000041D R	    mov             EBX, currY          ; move current y index into EBX so mPlacePeg can use BL
 				    mPlacePeg       al, bl, ECX
  00000561  52		     2	    push        EDX
  00000562  8A D0	     2	    mov         dl, al
@@ -1338,8 +1316,8 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  00000593			    _resetLow:
  00000593  B9 00000007		    mov             ECX, 7              ; reset color to 7, looping to the top of the array
  00000598			    _getColorLow:
- 00000598  A1 0000046D R	    mov             EAX, currX          ; move current x index into EAX so it can be used in mPlacePeg
- 0000059D  8B 1D 00000471 R	    mov             EBX, currY          ; move current y index to EBX to be used in mPlacePeg
+ 00000598  A1 00000419 R	    mov             EAX, currX          ; move current x index into EAX so it can be used in mPlacePeg
+ 0000059D  8B 1D 0000041D R	    mov             EBX, currY          ; move current y index to EBX to be used in mPlacePeg
 				    mPlacePeg       al, bl, ECX
  000005A3  52		     2	    push        EDX
  000005A4  8A D0	     2	    mov         dl, al
@@ -1360,7 +1338,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
 
  000005CB			_enter:
 
- 000005CB  83 3D 00000475 R	cmp             currIndex, 3            ; Check if 4th peg
+ 000005CB  83 3D 00000421 R	cmp             currIndex, 3            ; Check if 4th peg
 	   03
  000005D2  74 02		je              _onlyEnter              ; jump to check if downkey pressed
  000005D4  EB 0C		jmp             _break                  ; else continue on 
@@ -1373,26 +1351,26 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  000005E2			_break:
 
  000005E2  83 C7 04		add             EDI, 4                  ; increment current index
- 000005E5  A1 00000471 R	mov             EAX, currY              ; move current y coordinate into eax
+ 000005E5  A1 0000041D R	mov             EAX, currY              ; move current y coordinate into eax
  000005EA  83 C0 02		add             EAX, 2                  ; incease it by 2
- 000005ED  A3 00000471 R	mov             currY, EAX              ; store updated currY
+ 000005ED  A3 0000041D R	mov             currY, EAX              ; store updated currY
 
- 000005F2  FF 05 00000475 R	inc             currIndex               ; increment current index in userArray
- 000005F8  83 3D 00000475 R	cmp             currIndex, 4            ; check to see if it's over array limit
+ 000005F2  FF 05 00000421 R	inc             currIndex               ; increment current index in user_guess
+ 000005F8  83 3D 00000421 R	cmp             currIndex, 4            ; check to see if it's over array limit
 	   04
  000005FF  7D 30		jge             _end
  00000601  E9 FFFFFED1		jmp             _preloop                ; loop to get a new number
 
  00000606			_up:
- 00000606  A1 00000471 R	    mov         EAX, currY
+ 00000606  A1 0000041D R	    mov         EAX, currY
  0000060B  83 F8 07		    cmp         EAX, 7                  ; compare current y coord with 7. If it's 7, just go back to looping.
  0000060E  0F 84 FFFFFEF1	    je          _loop
  00000614  83 E8 02		    sub         EAX, 2                  ; subtract 2 from currY to get to peg above currY
- 00000617  A3 00000471 R	    mov         currY, EAX
+ 00000617  A3 0000041D R	    mov         currY, EAX
  0000061C  83 EF 04		    sub         EDI, 4                  ; move array pointer back to previous entry
- 0000061F  A1 00000475 R	    mov         EAX, currIndex
+ 0000061F  A1 00000421 R	    mov         EAX, currIndex
  00000624  83 E8 01		    sub         EAX, 1                  ; subtract 1 from currIndex
- 00000627  A3 00000475 R	    mov         currIndex, EAX
+ 00000627  A3 00000421 R	    mov         currIndex, EAX
  0000062C  E9 FFFFFEA6		    jmp         _preloop                ; go to preloop
 
 
@@ -1400,9 +1378,9 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  00000631  6A 08		push            8
  00000633  E8 FFFFFC58		call            SetColorFromPalette     ; set color back to white
 
- 00000638  C7 05 00000471 R	mov             currY, 7                ; reset currY for next round
+ 00000638  C7 05 0000041D R	mov             currY, 7                ; reset currY for next round
 	   00000007
- 00000642  A1 0000046D R	mov             EAX, currX              ; set currX to currX + 8 to get next round x coordinate
+ 00000642  A1 00000419 R	mov             EAX, currX              ; set currX to currX + 8 to get next round x coordinate
  00000647  83 C0 08		add             EAX, 8
 
  0000064A  5A			pop             EDX
@@ -1414,7 +1392,7 @@ Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
  00000652			GetUserCode ENDP
 
 				END main
-Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:14:04
+Microsoft (R) Macro Assembler Version 14.35.32217.1	    06/10/23 19:19:27
 Mastermind			(AddTwo.asm		     Symbols 2 - 1
 
 
@@ -1521,7 +1499,7 @@ Segments and Groups:
 
 FLAT . . . . . . . . . . . . . .	GROUP
 STACK  . . . . . . . . . . . . .	32 Bit	 00001000 Para	  Stack	  'STACK'	 
-_DATA  . . . . . . . . . . . . .	32 Bit	 00000479 Para	  Public  'DATA'	
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000425 Para	  Public  'DATA'	
 _TEXT  . . . . . . . . . . . . .	32 Bit	 00000652 Para	  Public  'CODE'	
 
 
@@ -1928,9 +1906,9 @@ black  . . . . . . . . . . . . .	Number	 00000000h
 blows  . . . . . . . . . . . . .	DWord	 00000409 _DATA	
 blue . . . . . . . . . . . . . .	Number	 00000001h   
 brown  . . . . . . . . . . . . .	Number	 00000006h   
-currIndex  . . . . . . . . . . .	DWord	 00000475 _DATA	
-currX  . . . . . . . . . . . . .	DWord	 0000046D _DATA	
-currY  . . . . . . . . . . . . .	DWord	 00000471 _DATA	
+currIndex  . . . . . . . . . . .	DWord	 00000421 _DATA	
+currX  . . . . . . . . . . . . .	DWord	 00000419 _DATA	
+currY  . . . . . . . . . . . . .	DWord	 0000041D _DATA	
 current_round  . . . . . . . . .	Byte	 00000364 _DATA	
 cyan . . . . . . . . . . . . . .	Number	 00000003h   
 exit . . . . . . . . . . . . . .	Text   	 INVOKE ExitProcess,0
@@ -1948,16 +1926,9 @@ lightMagenta . . . . . . . . . .	Number	 0000000Dh
 lightRed . . . . . . . . . . . .	Number	 0000000Ch   
 magenta  . . . . . . . . . . . .	Number	 00000005h   
 matches  . . . . . . . . . . . .	DWord	 00000415 _DATA	
-msgHh1 . . . . . . . . . . . . .	Byte	 00000419 _DATA	
-msgHh2 . . . . . . . . . . . . .	Byte	 0000042B _DATA	
-msgHh3 . . . . . . . . . . . . .	Byte	 00000438 _DATA	
-msgHh4 . . . . . . . . . . . . .	Byte	 0000044A _DATA	
-msgHh5 . . . . . . . . . . . . .	Byte	 00000452 _DATA	
-msgSpace . . . . . . . . . . . .	Byte	 0000045B _DATA	
 red  . . . . . . . . . . . . . .	Number	 00000004h   
 selectColor  . . . . . . . . . .	Byte	 00000318 _DATA	
 solution . . . . . . . . . . . .	DWord	 00000365 _DATA	
-userArray  . . . . . . . . . . .	DWord	 0000045D _DATA	
 user_guess . . . . . . . . . . .	DWord	 000003F5 _DATA	
 white  . . . . . . . . . . . . .	Number	 0000000Fh   
 wsprintf . . . . . . . . . . . .	Text   	 wsprintfA

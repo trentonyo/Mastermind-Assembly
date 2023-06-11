@@ -227,30 +227,18 @@ selectColor    				BYTE		"Select a color for a peg using the arrow keys, and pre
 
 current_round               BYTE        0
 
-solution                    DWORD        CODE_LENGTH DUP(OUT_OF_RANGE_2)
-game_matrix                 DWORD        CODE_LENGTH DUP(ROUNDS DUP(?))
+solution                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)
+game_matrix                 DWORD       CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
-user_guess                  DWORD        CODE_LENGTH DUP(OUT_OF_RANGE_1)                     ; TODO consolidate arrays from test phase - Trenton Young
+user_guess                  DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)
 
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       0
 blows                       DWORD       0
-;user_guess                 DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
-;solution                   DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
 helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
-; Hits and Blows temporary helper variables   - feel free to delete after
-msgHh1                      BYTE        "Comparing arrays", LF, 0
-msgHh2                      BYTE        "User array: ", 0
-msgHh3                      BYTE        LF, "Solution array: ", 0
-msgHh4                      BYTE        LF, "hits: ", 0
-msgHh5                      BYTE        LF, "blows: ", 0
-msgSpace                    BYTE        " ", 0
-
-
-userArray                   DWORD       4 DUP(?)                                ; TODO consolidate arrays from test phase - Trenton Young
 currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
@@ -293,7 +281,7 @@ mPlaceFeedback  7, 4, HIT
 mPlaceFeedback  8, 4, BLOW
 mPlaceFeedback  7, 5, BLOW
 
-push            TRUE
+push            FALSE
 push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
@@ -301,7 +289,7 @@ call            GenerateCode
 call            PrintSolution
 
 
-push            OFFSET userArray
+push            OFFSET user_guess
 call            GetUserCode
 
 
@@ -651,7 +639,7 @@ CheckSimilar PROC
 ;                   call
 ;
 ; Preconditions:    Must have user_guess and solution as global variables
-;                   Both of the arrays must have a size of 4   TODO must they, though? - Trenton Young
+;                   Both of the arrays must have a size of 4
 ;                   Additional global variables needed:
 ;                   helperVar1, matches
 ;
@@ -798,14 +786,14 @@ GetUserCode PROC
 ; Author:           Brayden Aldrich
 ; Description:      Gets user inputs via arrow keys and the enter key,
 ;                   dynamically displays these choices, then stores desired color
-;                   into userArray
+;                   into user_guess
 ;
-; Helper Variables: currX, currIndex, userArray
+; Helper Variables: currX, currIndex, user_guess
 ;
 ; Parameters:       push OFFSET array
 ;                   call 
 ;                   
-; Postconditions:   Updated userArray
+; Postconditions:   Updated user_guess
 ; -------------------------------------------------------- -
 push            EBP
 mov             EBP, ESP
@@ -919,7 +907,7 @@ mov             EAX, currY              ; move current y coordinate into eax
 add             EAX, 2                  ; incease it by 2
 mov             currY, EAX              ; store updated currY
 
-inc             currIndex               ; increment current index in userArray
+inc             currIndex               ; increment current index in user_guess
 cmp             currIndex, 4            ; check to see if it's over array limit
 jge             _end
 jmp             _preloop                ; loop to get a new number
