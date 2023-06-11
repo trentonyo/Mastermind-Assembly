@@ -234,7 +234,7 @@ prompt_duplicates           BYTE        "Would you like to allow duplicates in t
 
 ; (Gamestate)               Variables defining gameplay
 
-current_round               BYTE        0
+current_round               DWORD        0
 
 solution                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)
 game_matrix                 DWORD       CODE_LENGTH DUP(ROUNDS DUP(?))
@@ -401,26 +401,14 @@ GameTurn:
     push            OFFSET user_guess
     call            GetUserCode
 
-    ; TODO store the guess in the game_matrix
-    ;push            ECX
-    ;call            PlaceFeedbackGameTurn
-;    mGotoXY         1, 19
-;    mov             EAX, ECX
-;    call            WriteDec
-;    call            Crlf
-;
-;    mGotoXY         1, 19
-;    mov             EAX, hits
-;    call            WriteDec
-;
-;    mGotoXY         1, 20
-;    mov             EAX, blows
-;    call            WriteDec
-
     ; Check the user's move against solution
     push            OFFSET blows
     push            OFFSET hits
     call            CheckSimilar
+
+    ; TODO store the guess in the game_matrix
+    push            ECX
+    call            PlaceFeedbackGameTurn
 
     mGotoXY         1, 19
     call            debugHH
@@ -893,6 +881,7 @@ CheckSimilar PROC
         JMP     notAHit
         isAHit:
             add hits, 1
+            JMP outOfisThisInArray
 
         notAHit:
             mov     helperVar1, EAX
@@ -926,15 +915,6 @@ outOfPrintUserGuess:
     mov     [EBX], EAX      ; saving to hits variable
 
     mov     EAX, matches
-    cmp     hits, EAX
-    JG      _resetBlowsHH
-    sub     EAX, hits
-    JMP     _dontSubBlowsHH
-    _resetBlowsHH:
-        mov     EAX, 0
-    _dontSubBlowsHH:
-
-
 
     mov     EBX, [EBP + 12]
     mov     [EBX], EAX      ; saving to blows variable
@@ -1243,7 +1223,7 @@ PlaceFeedbackGameTurn PROC
 ; Author:           Hla Htun
 ; Description:      Places the feedback for specific round
 ;
-; Parameters:       push    ECX         ; this is the nth round
+; Parameters:       push    current_round         ; this is the nth round
 ;                   call
 ;
 ; Postconditions:   Feedbacks will be displayed on the GameBoard
@@ -1253,71 +1233,107 @@ PlaceFeedbackGameTurn PROC
     mov         EBP, ESP
     push        ECX
     push        EBX
+    push        EAX
 
+    mGotoXY     1, 25
+    mov         AL, 'C'
+    call        WriteChar
     mov         EAX, [EBP + 8]
     call        WriteDec
+    call        Crlf
 
-    mov         H_HelperVar1, ECX
-    cmp         H_HelperVar1, 8
-    JE          eighth_round
-    cmp         H_HelperVar2, 7
-    JE          seventh_round
-    cmp         H_HelperVar2, 6
-    JE          sixth_round
-    cmp         H_HelperVar2, 5
-    JE          fifth_round
-    cmp         H_HelperVar2, 4
-    JE          fourth_round
-    cmp         H_HelperVar2, 3
-    JE          third_round
-    cmp         H_HelperVar2, 2
-    JE          second_round
-    cmp         H_HelperVar2, 1
-    JE          first_round
+    cmp         EAX, 8
+    JE          _roundOne
+    cmp         EAX, 7
+    JE          _roundTwo
+    cmp         EAX, 6
+    JE          _roundThree
+    cmp         EAX, 5
+    JE          _roundFour
+    cmp         EAX, 4
+    JE          _roundFive
+    cmp         EAX, 3
+    JE          _roundSix
+    cmp         EAX, 2
+    JE          _roundSeven
+    JMP         _roundEight
 
-    eighth_round:
-        mov H_HelperVarX, 7
-        mov H_HelperVarY, 4
-        JMP _placeFeedbackHH
+    _roundOne:
+        mov     H_HelperVarX, 7
+        JMP     _printDraft
+    _roundTwo:
+        mov     H_HelperVarX, 15
+        JMP     _printDraft
+    _roundThree:
+        mov     H_HelperVarX, 23
+        JMP     _printDraft
+    _roundFour:
+        mov     H_HelperVarX, 31
+        JMP     _printDraft
+    _roundFive:
+        mov     H_HelperVarX, 39
+        JMP     _printDraft
+    _roundSix:
+        mov     H_HelperVarX, 47
+        JMP     _printDraft
+    _roundSeven:
+        mov     H_HelperVarX, 55
+        JMP     _printDraft
+    _roundEight:
+        mov     H_HelperVarX, 63
+        JMP     _printDraft
 
-    seventh_round:
-    sixth_round:
-    fifth_round:
-    fourth_round:
-    third_round:
-    second_round:
-    first_round:
+    _printDraft:
+        mov     H_HelperVarY, 4
+        mov     H_HelperVarMovY, 0
+        cmp     hits, 0
+        JE      _outofPrintHitsHH
 
-    _placeFeedbackHH:
-        mov     ECX, 4
-        _innerLoopPFHH:
-            cmp     hits, 0
-            JE      _outofPlaceHitsHH
-            mov     H_HelperVar2, 0          ; counter for printing hits
-            _placeHitsHH:
-                cmp     H_HelperVar2, 2
-                JE      _moveYHH
-                JMP     _outofMoveYHH
-                _moveYHH:
-                    inc     H_HelperVarY
-                    sub     H_HelperVarX, 1
-                _outofMoveYHH:
-
-                mPlaceFeedback  H_HelperVarX, H_HelperVarY, Hits
+        mov     EBX, 0
+        _printHitsHH:
+            cmp     H_HelperVarMovY, 2
+            JL      _continue1HH
+            inc     H_HelperVarY
+            sub     H_HelperVarX, 2
+            mov     H_HelperVarMovY, 0
+            _continue1HH:
+                mPlaceFeedback H_HelperVarX, H_HelperVarY, HIT
                 inc     H_HelperVarX
+                inc     H_HelperVarMovY
 
-                mov     EBX, hits
-                cmp     H_HelperVar2, EBX
-                JE      _outofPlaceHitsHH
-                inc     H_HelperVar2
-                JMP     _placeHitsHH
+            inc EBX
+            cmp EBX, hits
+            JGE _outofPrintHitsHH
+            JMP _printHitsHH
+        _outofPrintHitsHH:
 
-            _outofPlaceHitsHH:
+        mov     H_HelperVarY, 4
+        mov     H_HelperVarMovY, 0
+        cmp     blows, 0
+        JE      _outofPrintBlowsHH
+        mov     EBX, 0
+        _printBlowsHH:
+            cmp     H_HelperVarMovY, 2
+            JL      _continue2HH
+            inc     H_HelperVarY
+            sub     H_HelperVarX, 2
+            mov     H_HelperVarMovY, 0
+            _continue2HH:
+                mPlaceFeedback H_HelperVarX, H_HelperVarY, BLOW
+                inc     H_HelperVarX
+                inc     H_HelperVarMovY
+
+            inc EBX
+            cmp EBX, blows
+            JGE _outofPrintBlowsHH
+            JMP _printBlowsHH
+        _outofPrintBlowsHH:
 
 
-            loop _innerLoopPFHH
-        _outofInnerLoopPFHH:
+    _outofPrintDraft:
+        mov H_HelperVarY, 4
 
+    pop         EAX
     pop         EBX
     pop         ECX
     pop         EBP
@@ -1327,7 +1343,14 @@ PlaceFeedbackGameTurn ENDP
 
 debugHH     PROC
     push    ECX
+    push    EAX
 
+    mov     AL, 'R'
+    call    WriteChar
+    mov     EAX, current_round
+    add     EAX, 1
+    call    WriteDec
+    call    Crlf
     mov     ECX, 0
     _printHH:
          push       ECX
@@ -1370,17 +1393,18 @@ debugHH     PROC
         call    WriteDec
         call    Crlf
 
-        mov     Al, 'B'
+        mov     AL, 'B'
         call    WriteChar
         mov     EAX, blows
         call    WriteDec
-
+        call    Crlf
 
     _outofPrintHH3:
 
     _printHH4:
 
     _outofPrintHH4:
+    pop     EAX
     pop     ECX
 ret
 debugHH     ENDP
