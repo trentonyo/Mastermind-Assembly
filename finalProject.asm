@@ -1276,7 +1276,6 @@ PlaceFeedbackGameTurn PROC
         _outofPrintHitsHH:
 
         mov     H_HelperVarY, 4
-        mov     H_HelperVarMovY, 0
         cmp     blows, 0                ; if no blows, don't draw
         JE      _outofPrintBlowsHH
         mov     EBX, 0
