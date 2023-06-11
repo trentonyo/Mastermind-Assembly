@@ -251,7 +251,7 @@ helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
-currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
+currX                       DWORD       7              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 
@@ -319,8 +319,8 @@ DisplayRules:
 ; press a key before continuing, to give them a chance to read
 ; --------------------------------------------------------
 
-    ; TODO EXTRA (extra cool: file IO)
-    ; TODO EXTRA we could have two different messages, the initial
+    ; TODO EXTRA: file IO the rules
+    ; TODO EXTRA: we could have two different messages, the initial
     ;           print which goes into detail and a subsequent version
     ;           which is less verbose
     mPrint      OFFSET RULES_1
@@ -408,6 +408,8 @@ GameTurn:
 
     ; If no endgame conditions are met, the user takes another turn
     inc             current_round
+    add             currX, 8
+    mov             currIndex, 0
     loop            GameTurn
 
 
