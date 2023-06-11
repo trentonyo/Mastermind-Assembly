@@ -193,6 +193,7 @@ mIsArrayElementEqual  MACRO _iArray, _isEqual
 
 ENDM
 
+
 .data
 
 ; (Graphics)                Define any ASCII art strings here
@@ -247,6 +248,7 @@ msgHh3                      BYTE        LF, "Solution array: ", 0
 msgHh4                      BYTE        LF, "hits: ", 0
 msgHh5                      BYTE        LF, "blows: ", 0
 msgSpace                    BYTE        " ", 0
+
 
 userArray                   DWORD       4 DUP(?)                                ; TODO consolidate arrays from test phase - Trenton Young
 currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
@@ -815,8 +817,14 @@ push            EDX
 
 _init_variables:
     mov             EDI, [EBP + 8]      ; Array offset 
-    mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be
-                                        ; displayed.
+    mGotoXY         1, 17               ; Move cursor to (1,17). This is where the directions will be displayed.
+    mov             ECX, 0
+    mov             [EDI], ECX
+    mov             [EDI + 4], ECX
+    mov             [EDI + 8], ECX
+    mov             [EDI + 12], ECX
+    
+    
 _string:
     mPrint          selectColor
 
@@ -824,12 +832,14 @@ _string:
 
 ; Initialize the screen and ECX to show a color before the user hits the arrow keys. 
 _preloop:
-mov             EAX, currX              ; init current x
+
 mov             EBX, currY              ; init current y
-mov             ECX, 0                  ; init red color
-mPlacePeg       al, bl, 0               ; place peg on coordinate
+mov             EAX, currX              ; init current x
+mov             ECX, [EDI] 
+mPlacePeg       al, bl, ECX             ; place peg on coordinate
 
 ;  loop until user inputs a code
+
 _loop:
     mov             EAX, 50
     call            Delay
@@ -861,6 +871,7 @@ _increase:
 
 add             ECX, 1                  ; increment color map
 cmp             ECX, 8                  ; check if current index is too high
+
 jge             _resetHigh
 jmp             _getColorHigh   
 
@@ -870,7 +881,8 @@ jmp             _getColorHigh
     mov             EAX, currX          ; move the current x index into EAX so mPlacePeg can use AL
     mov             EBX, currY          ; move current y index into EBX so mPlacePeg can use BL
     mPlacePeg       al, bl, ECX
-                                        ; ^ User's previous choices are displayed (currX, 19)
+    mov             [EDI], ECX          ; mov current color into array[n]
+                                        
 jmp             _loop                   ; Loop until a new key press
 
 _decrease:
@@ -885,15 +897,28 @@ jmp             _getColorLow
     mov             EAX, currX          ; move current x index into EAX so it can be used in mPlacePeg
     mov             EBX, currY          ; move current y index to EBX to be used in mPlacePeg
     mPlacePeg       al, bl, ECX
-                                        ; ^ User's previous choices are displayed (currX, 19)
+    mov             [EDI], ECX          ; mov current color into array[n]
+                                        
 jmp             _loop                   ; Loop until a new key press
 
 _enter:
-mov             [EDI], ECX              ; add color number into current index         
+
+cmp             currIndex, 3            ; Check if 4th peg
+je              _onlyEnter              ; jump to check if downkey pressed
+jmp             _break                  ; else continue on 
+_onlyEnter:
+    cmp             EDX, 40             ; Check if downkey was pressed
+    je              downKey             ; if so, jump to downKey
+    jmp             _break              ; else continue on
+    downKey:
+        jmp             _preloop        ; jump to preloop to avoid accidental downkey entering users code
+_break:
+
 add             EDI, 4                  ; increment current index
 mov             EAX, currY              ; move current y coordinate into eax
 add             EAX, 2                  ; incease it by 2
 mov             currY, EAX              ; store updated currY
+
 inc             currIndex               ; increment current index in userArray
 cmp             currIndex, 4            ; check to see if it's over array limit
 jge             _end
