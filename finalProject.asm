@@ -227,6 +227,8 @@ greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
 invalidCharMsg              BYTE        "Invalid input, try again.", 0
 
+rules_placeholder           BYTE        "Them's the rules.", CR, LF, 0
+
 prompt_rules                BYTE        "Would you like me to tell you the rules of MASTERMIND? (y/n)", 0
 prompt_duplicates           BYTE        "Would you like to allow duplicates in the solution code?", CR, LF, "WARNING: This significantly increases the challenge of the game. (y/n)", 0
 
@@ -313,22 +315,23 @@ DisplayRules:
 ; --------------------------------------------------------
 ; If the user has won the game, then they may allow for duplicates
 ; in the solution code
-cmp             userHasWon, TRUE
-jne             NewGameState
+NewGamestate:
+cmp                 userHasWon, TRUE
+jne                 NewGameState
 PromptForDuplicates:
 ;
 ; Allow the user to choose if they want to allow duplicate
 ; colors in the code, let user know that there may be more
 ; than two of any given color if they agree.
 
-    push        OFFSET prompt_duplicates
-    call        PromptMsg
+    push            OFFSET prompt_duplicates
+    call            PromptMsg
 
     ; Store the user's decision
-    mov         allowDuplicates, EAX
+    mov             allowDuplicates, EAX
 
 ; --------------------------------------------------------
-NewGamestate:
+GenerateGamestate:
 ;
 ; Print a new gameboard, set the round to zero, and generate a new
 ; solution code
@@ -337,10 +340,11 @@ NewGamestate:
     call            DrawNewGameboard
     mov             current_round, 0
 
-    push            FALSE
+    push            allowDuplicates
     push            TYPE solution
     push            OFFSET solution
     call            GenerateCode
+
 
 ; --------------------------------------------------------
 mov                 ECX, ROUNDS
