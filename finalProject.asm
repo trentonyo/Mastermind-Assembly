@@ -251,7 +251,7 @@ helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
-currX                       DWORD       7              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
+currX                       DWORD       7               ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
 
@@ -267,6 +267,14 @@ RULES_7                     BYTE        "You can also ( ", 24, " ) up or ( " , 2
 RULES_8                     BYTE        "Correct guess (right color and position) also known as a 'hit' will be displayed as 'o'", CR, LF, 0
 RULES_9                     BYTE        "Semi-correct guess (right color but not position) also known as a 'blow' will be displayed as '*'", CR, LF, 0
 RULES_10                    BYTE        "Wrong guess also known as a 'miss' will be displayed as '.'", CR, LF, LF, 0
+
+H_HelperVar1                DWORD       ?               ; Helper var for GameTurn (Place feedback loop counter)
+H_HelperVar2                DWORD       ?               ; Helper var for GameTurn (Place feedback loop counter)
+H_HelperVar3                DWORD       ?               ; Helper var for GameTurn (Place feedback loop counter)
+H_HelperVar4                DWORD       ?               ; Helper var for GameTurn (Place feedback loop counter)
+H_HelperVarX                DWORD       ?               ; Helper var for GameTurn - Holds the x coordinate for placing the feedback
+H_HelperVarY                DWORD       ?               ; Helper var for GameTurn - Holds the y coordinate for placing the feedback
+H_HelperVarMovY             DWORD       ?
 
 .code
 main PROC; (insert executable instructions here)
@@ -394,13 +402,30 @@ GameTurn:
     call            GetUserCode
 
     ; TODO store the guess in the game_matrix
+    ;push            ECX
+    ;call            PlaceFeedbackGameTurn
+;    mGotoXY         1, 19
+;    mov             EAX, ECX
+;    call            WriteDec
+;    call            Crlf
+;
+;    mGotoXY         1, 19
+;    mov             EAX, hits
+;    call            WriteDec
+;
+;    mGotoXY         1, 20
+;    mov             EAX, blows
+;    call            WriteDec
 
     ; Check the user's move against solution
     push            OFFSET blows
     push            OFFSET hits
     call            CheckSimilar
 
+    mGotoXY         1, 19
+    call            debugHH
     ; TODO draw user feedback
+
 
     ; TODO IF HITS == 4, jmp to WinnerCelebration
 
@@ -1204,4 +1229,150 @@ pop                 EBP
 ret 4
 PromptMsg ENDP
 
+; -------------------------------------------------------- -
+PlaceFeedbackGameTurn PROC
+; Author:           Hla Htun
+; Description:      Places the feedback for specific round
+;
+; Parameters:       push    ECX         ; this is the nth round
+;                   call
+;
+; Postconditions:   Feedbacks will be displayed on the GameBoard
+;                   for that specific round
+; -------------------------------------------------------- -
+    push        EBP
+    mov         EBP, ESP
+    push        ECX
+    push        EBX
+
+    mov         EAX, [EBP + 8]
+    call        WriteDec
+
+    mov         H_HelperVar1, ECX
+    cmp         H_HelperVar1, 8
+    JE          eighth_round
+    cmp         H_HelperVar2, 7
+    JE          seventh_round
+    cmp         H_HelperVar2, 6
+    JE          sixth_round
+    cmp         H_HelperVar2, 5
+    JE          fifth_round
+    cmp         H_HelperVar2, 4
+    JE          fourth_round
+    cmp         H_HelperVar2, 3
+    JE          third_round
+    cmp         H_HelperVar2, 2
+    JE          second_round
+    cmp         H_HelperVar2, 1
+    JE          first_round
+
+    eighth_round:
+        mov H_HelperVarX, 7
+        mov H_HelperVarY, 4
+        JMP _placeFeedbackHH
+
+    seventh_round:
+    sixth_round:
+    fifth_round:
+    fourth_round:
+    third_round:
+    second_round:
+    first_round:
+
+    _placeFeedbackHH:
+        mov     ECX, 4
+        _innerLoopPFHH:
+            cmp     hits, 0
+            JE      _outofPlaceHitsHH
+            mov     H_HelperVar2, 0          ; counter for printing hits
+            _placeHitsHH:
+                cmp     H_HelperVar2, 2
+                JE      _moveYHH
+                JMP     _outofMoveYHH
+                _moveYHH:
+                    inc     H_HelperVarY
+                    sub     H_HelperVarX, 1
+                _outofMoveYHH:
+
+                mPlaceFeedback  H_HelperVarX, H_HelperVarY, Hits
+                inc     H_HelperVarX
+
+                mov     EBX, hits
+                cmp     H_HelperVar2, EBX
+                JE      _outofPlaceHitsHH
+                inc     H_HelperVar2
+                JMP     _placeHitsHH
+
+            _outofPlaceHitsHH:
+
+
+            loop _innerLoopPFHH
+        _outofInnerLoopPFHH:
+
+    pop         EBX
+    pop         ECX
+    pop         EBP
+    ret
+PlaceFeedbackGameTurn ENDP
+
+
+debugHH     PROC
+    push    ECX
+
+    mov     ECX, 0
+    _printHH:
+         push       ECX
+         push       OFFSET user_guess
+         push       TYPE user_guess
+         call       ArrayAt
+         call       WriteDec
+         mov        AL, '-'
+         call       WriteChar
+         cmp        ECX, 3
+         JE         _outofPrintHH
+         inc        ECX
+         JMP        _printHH
+    _outofPrintHH:
+        call        Crlf
+
+
+    mov     ECX, 0
+    _printHH2:
+         push       ECX
+         push       OFFSET solution
+         push       TYPE solution
+         call       ArrayAt
+         call       WriteDec
+         mov        AL, '-'
+         call       WriteChar
+         cmp        ECX, 3
+         JE         _outofPrintHH2
+         inc        ECX
+         JMP        _printHH2
+    _outofPrintHH2:
+        call        Crlf
+
+
+    mGotoXY         1, 22
+    _printHH3:
+        mov     AL, 'H'
+        call    WriteChar
+        mov     EAX, hits
+        call    WriteDec
+        call    Crlf
+
+        mov     Al, 'B'
+        call    WriteChar
+        mov     EAX, blows
+        call    WriteDec
+
+
+    _outofPrintHH3:
+
+    _printHH4:
+
+    _outofPrintHH4:
+    pop     ECX
+ret
+debugHH     ENDP
 END main
