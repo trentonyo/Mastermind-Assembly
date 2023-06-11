@@ -225,12 +225,12 @@ NO                          BYTE        "n"
 
 greeting    				BYTE		"Let's play MASTERMIND!", CR, LF, 0
 selectColor    				BYTE		"Select a color for a peg using the arrow keys, and press enter when done.", CR, LF, 0
-invalidCharMsg              BYTE        "Invalid input, try again.", 0
+invalidCharMsg              BYTE        "Invalid input, try again.", LF, 0
 
 rules_placeholder           BYTE        "Them's the rules.", CR, LF, 0
 
-prompt_rules                BYTE        "Would you like me to tell you the rules of MASTERMIND? (y/n)", LF, 0
-prompt_duplicates           BYTE        LF, "Would you like to allow duplicates in the solution code?", CR, LF, "   WARNING: This significantly increases the challenge of the game. (y/n)", 0
+prompt_rules                BYTE        "Would you like me to tell you the rules of MASTERMIND? (y/n)", 0
+prompt_duplicates           BYTE        "Would you like to allow duplicates in the solution code?", CR, LF, "   WARNING: This significantly increases the challenge of the game. (y/n)", 0
 
 ; (Gamestate)               Variables defining gameplay
 
@@ -359,8 +359,7 @@ DisplayRules:
     mPrint      OFFSET RULES_10
 
     call        WaitMsg
-    call        Crlf
-    call        Crlf
+    call        Clrscr
 ; --------------------------------------------------------
 ; If the user has won the game, then they may allow for duplicates
 ; in the solution code
