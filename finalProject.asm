@@ -282,13 +282,84 @@ Loser                       BYTE        "   Uh..oh! You've ran out of attempts :
 
 prompt_tryAgain             BYTE        "   Would you like to try again? (y/n)", CR, LF, 0
 
-farewell                    BYTE        LF, "Thank you for playing our game!" , LF, "Programmed by Trenton Young, Brayden, Hla Htun and Cameron Kroeker", LF, LF, 0
+farewell                    BYTE        LF, "Thank you for playing our game!" , LF, "Programmed by Trenton Young, Brayden Aldrich, Hla Htun and Cameron Kroeker", LF, LF, 0
 
 prompt_userName             BYTE        "Please type your name: ", 0
 userName                    BYTE        ?
 
+;   FPU AND RECURSIVE REQUIREMENT STRINGS
+REQ_question            BYTE    "Our game doesn't use the FPU or recursive procedures. Would you like to see two simple outputs for these? (y/n)", 10, 13, 0
+REQ_moveon              BYTE    "Press enter to move on...", 10, 13, 0
+FPU_intro_string		BYTE   	"Let's do some FPU addition to start.", 10, 13, 0
+FPU_getUserFirstNum 	BYTE 	"Please type your first real number: ", 10, 13, 0
+FPU_getUserSecNum 		BYTE 	"Please type your second real number: ", 10, 13, 0
+FPU_result 				BYTE 	"The sum of the two real numbers is: ", 10, 13, 0
+REC_intro 				BYTE 	"Now let's recursively sum numbers!", 10, 13, 0
+REC_getN			    BYTE 	"Choose a number from [2-500]", 10, 13, 0
+REC_n                   DWORD   ?
+REC_final               BYTE    "Using recursion, I found that the sum is: ",0
+REC_answer				DWORD 	?
+
+
 .code
 main PROC; (insert executable instructions here)
+
+; --------------------------------------------------------
+FPUandREC:
+;
+;   There are 2 functions:
+;   1) Get 2 real numbers from user and do an FPU addition
+;   2) Get a number from the user and sum all numbers up to desired number
+;
+; --------------------------------------------------------
+    pushad
+    push            OFFSET REQ_question
+    call            PromptMsg
+    cmp             EAX, FALSE                      ; check if user doesn't wanna see this
+    je              _end
+
+    
+    call            AddFPU                          ; Call AddFPU proc
+
+    mPrint          REC_intro                       
+    ; Get a valid number from user
+    start:                                          
+        mPrint          REC_getN
+        call            Readint
+        cmp             EAX, 2
+        jl              _invalid
+        cmp             EAX, 500
+        jg              _invalid
+        jmp             _valid
+    _invalid:
+
+        mPrint          invalidCharMsg
+        jmp             start
+
+    _valid:
+        mov             REC_n, EAX                  
+        mov             EAX, 0
+        mov             ECX, REC_n  
+        call            RSum                        ; Using the EAX and ECX recursively sum the numbers    
+        mPrint          REC_final
+        call            Writedec
+        call            CrLf
+        mPrint          REQ_moveon
+    ; loop until user hits the enter key
+    _l:
+        mov         EAX, 50
+        call        Delay
+        call        ReadKey
+        jz          _l
+
+    movzx           EDX, DX
+    cmp             EDX, 13
+    je              _end
+    jmp             _l
+    
+    _end:
+    popad
+
 
 
 ; --------------------------------------------------------
@@ -305,11 +376,11 @@ ProgramSetup:
     call            SetColorFromPalette
 
 
-; --------------------------------------------------------
 InitialGreeting:
 ;
 ; Prompts the user for their name then greets them
 ; --------------------------------------------------------
+    call            Clrscr
     call            getName
 ; --------------------------------------------------------
 PromptForRules:
@@ -1419,5 +1490,52 @@ getName PROC
 
 ret
 getName ENDP
+
+; -------------------------------------------------------- -
+RSum PROC
+; Author:           Brayden Aldrich
+; Description:      Sums numbers [0...n] recursively.
+;
+; Parameters:       call RSum
+;                   
+; Postconditions:   Call Writedec to see output on console.
+; -------------------------------------------------------- -
+cmp 		ECX, 0
+jz 			_end
+add 		EAX, ECX
+dec 		ECX
+call 		RSum
+_end:
+mov 		REC_answer, EAX
+ret 4
+RSum endp
+
+; -------------------------------------------------------- -
+AddFPU PROC
+; Author:           Brayden Aldrich
+; Description:      Gets two real numbers from user and calculates their sum
+;
+; Parameters:       Call AddFPU
+;                   
+; Postconditions:   Sum outputted on console
+; -------------------------------------------------------- -
+
+finit
+mov 	EDX, OFFSET FPU_intro_string
+call 	WriteString
+mov 	EDX, OFFSET FPU_getUserFirstNum
+call 	WriteString
+call 	ReadFloat
+mov 	EDX, OFFSET FPU_getUserSecNum
+call 	WriteString
+call 	ReadFloat
+FADD 	ST(0), ST(1)
+call 	WriteFloat
+call    CrLf
+
+ret
+AddFPU  ENDP
+
+
 
 END main
