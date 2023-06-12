@@ -288,17 +288,17 @@ prompt_userName             BYTE        "Please type your name: ", 0
 userName                    BYTE        ?
 
 ;   FPU AND RECURSIVE REQUIREMENT STRINGS
-REQ_question            BYTE    "Our game doesn't use the FPU or recursive procedures. Would you like to see two simple outputs for these? (y/n)", 10, 13, 0
-REQ_moveon              BYTE    "Press enter to move on...", 10, 13, 0
-FPU_intro_string		BYTE   	"Let's do some FPU addition to start.", 10, 13, 0
-FPU_getUserFirstNum 	BYTE 	"Please type your first real number: ", 10, 13, 0
-FPU_getUserSecNum 		BYTE 	"Please type your second real number: ", 10, 13, 0
-FPU_result 				BYTE 	"The sum of the two real numbers is: ", 10, 13, 0
-REC_intro 				BYTE 	"Now let's recursively sum numbers!", 10, 13, 0
-REC_getN			    BYTE 	"Choose a number from [2-500]", 10, 13, 0
-REC_n                   DWORD   ?
-REC_final               BYTE    "Using recursion, I found that the sum is: ",0
-REC_answer				DWORD 	?
+REQ_question                BYTE        "Our game doesn't use the FPU or recursive procedures. Would you like to see two simple outputs for these? (y/n)", 0
+REQ_moveon                  BYTE        "Press enter to move on...", 0
+FPU_intro_string		    BYTE   	    LF, "Let's do some FPU addition to start.", CR, LF, LF, 0
+FPU_getUserFirstNum 	    BYTE 	    "   Please type your first real number: ", 0
+FPU_getUserSecNum 		    BYTE 	    "   Please type your second real number: ", 0
+FPU_result 				    BYTE 	    LF, "   The sum of the two real numbers is: ", 0
+REC_intro 				    BYTE 	    "Now let's recursively sum numbers!", CR, LF, LF, 0
+REC_getN			        BYTE 	    "   Choose a number from [2-500]: ", 0
+REC_n                       DWORD       ?
+REC_final                   BYTE        LF, "   Using recursion, I found that the sum is: ",0
+REC_answer				    DWORD 	    ?
 
 
 .code
@@ -343,7 +343,8 @@ FPUandREC:
         call            RSum                        ; Using the EAX and ECX recursively sum the numbers    
         mPrint          REC_final
         call            Writedec
-        call            CrLf
+        call            Crlf
+        call            Crlf
         mPrint          REQ_moveon
     ; loop until user hits the enter key
     _l:
@@ -404,11 +405,6 @@ DisplayRules:
 ; Prints the rules of the game and then waits for the user to
 ; press a key before continuing, to give them a chance to read
 ; --------------------------------------------------------
-
-    ; TODO EXTRA: file IO the rules
-    ; TODO EXTRA: we could have two different messages, the initial
-    ;           print which goes into detail and a subsequent version
-    ;           which is less verbose
     mPrint      OFFSET RULES_1
     mPrint      OFFSET RULES_GAP
     mPrint      OFFSET RULES_2
@@ -435,14 +431,10 @@ DisplayRules:
 ; If the user has won the game, then they may allow for duplicates
 ; in the solution code
 NewGameState:
-;cmp                 userHasWon, TRUE
-;jne                 NewGameState
-;PromptForDuplicates:
-;
 ; Allow the user to choose if they want to allow duplicate
 ; colors in the code, let user know that there may be more
 ; than two of any given color if they agree.
-    ; reset all variables to its initial state
+; Also resets variables to its initial state
     mov             H_HelperVar1, 0
     mov             H_HelperVar2, 0
     mov             H_HelperVarX, 7
@@ -478,7 +470,7 @@ GenerateGamestate:
 ; --------------------------------------------------------
 mov                 ECX, ROUNDS
 GameTurn:
-;
+; Authors: Hla Htun, Brayden
 ; Get the user's input, check against the solution, give the
 ; user feedback, and repeat until the user is out of turns or
 ; guesses the solution
@@ -492,9 +484,6 @@ GameTurn:
     push            OFFSET blows
     push            OFFSET hits
     call            CheckSimilar
-
-    ; TODO store the guess in the game_matrix
-
 
     ; Draws feedbacks
     push            ECX
@@ -1001,19 +990,6 @@ mPlacePeg       75, 11, EAX
 
 mov EAX, solution[EDI+12]
 mPlacePeg       75, 13, EAX
-;
-;movzx EAX, solution[EDI]
-;mPlacePeg       75, 7, EAX
-;
-;movzx EAX, solution[EDI+1]
-;mPlacePeg       75, 9, EAX
-;
-;movzx EAX, solution[EDI+2]
-;mPlacePeg       75, 11, EAX
-;
-;movzx EAX, solution[EDI+3]
-;mPlacePeg       75, 13, EAX
-
 
 ;Set color back to White
 push            8
@@ -1063,8 +1039,6 @@ _init_variables:
 
 _string:
     mPrint          selectColor
-
-
 
 ; Initialize the screen and ECX to show a color before the user hits the arrow keys.
 _preloop:
@@ -1207,10 +1181,6 @@ mov                 EBP, ESP
 
 push                ECX
 push                EDX
-
-; Set text color to default
-;push                8
-;call                SetColorFromPalette
 
 _stackFrame:
     mov             EDX, [EBP + 8]          ; OFFSET message
@@ -1467,7 +1437,8 @@ getName PROC
 ;                   and BYTE greeting
 ;                   
 ;
-; Postconditions:   Prompts the screen and set's userName to userinput, then greets user with custom input.
+; Postconditions:   Prompts the screen and set's userName to user
+;                   input, then greets user with custom input.
 ; -------------------------------------------------------- -
 
      ;Uname DWORD ?
@@ -1507,7 +1478,7 @@ dec 		ECX
 call 		RSum
 _end:
 mov 		REC_answer, EAX
-ret 4
+ret
 RSum endp
 
 ; -------------------------------------------------------- -
@@ -1530,12 +1501,12 @@ mov 	EDX, OFFSET FPU_getUserSecNum
 call 	WriteString
 call 	ReadFloat
 FADD 	ST(0), ST(1)
+mPrint  FPU_result
 call 	WriteFloat
-call    CrLf
+call    Crlf
+call    Crlf
 
 ret
 AddFPU  ENDP
-
-
 
 END main
