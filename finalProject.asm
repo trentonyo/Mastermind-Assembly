@@ -1,6 +1,6 @@
  TITLE Mastermind			(finalProject.asm)
 
-; Author(s) : Trenton Young, Hla Htun, Brayden, Cameron Kroeker
+; Author(s) : Trenton Young, Hla Htun, Brayden Aldrich, Cameron Kroeker
 ; Course / Project ID  CS 271 / Final Project
 ; Description: Play Mastermind! The classic codebreaker game!
 
