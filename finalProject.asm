@@ -288,16 +288,16 @@ prompt_userName             BYTE        "Please type your name: ", 0
 userName                    BYTE        ?
 
 ;   FPU AND RECURSIVE REQUIREMENT STRINGS
-REQ_question            BYTE    "Our game doesn't use the FPU or recursive procedures. Would you like to see two simple outputs for these? (y/n)", 10, 13, 0
-REQ_moveon              BYTE    "Press enter to move on...", 10, 13, 0
-FPU_intro_string		BYTE   	"Let's do some FPU addition to start.", 10, 13, 0
-FPU_getUserFirstNum 	BYTE 	"Please type your first real number: ", 10, 13, 0
-FPU_getUserSecNum 		BYTE 	"Please type your second real number: ", 10, 13, 0
-FPU_result 				BYTE 	"The sum of the two real numbers is: ", 10, 13, 0
-REC_intro 				BYTE 	"Now let's recursively sum numbers!", 10, 13, 0
-REC_getN			    BYTE 	"Choose a number from [2-500]", 10, 13, 0
+REQ_question            BYTE    "Our game doesn't use the FPU or recursive procedures. Would you like to see two simple outputs for these? (y/n)", 0
+REQ_moveon              BYTE    "Press enter to move on...", 0
+FPU_intro_string		BYTE   	LF, "Let's do some FPU addition to start.", CR, LF, LF, 0
+FPU_getUserFirstNum 	BYTE 	"   Please type your first real number: ", 0
+FPU_getUserSecNum 		BYTE 	"   Please type your second real number: ", 0
+FPU_result 				BYTE 	LF, "   The sum of the two real numbers is: ", 0
+REC_intro 				BYTE 	"Now let's recursively sum numbers!", CR, LF, LF, 0
+REC_getN			    BYTE 	"   Choose a number from [2-500]: ", 0
 REC_n                   DWORD   ?
-REC_final               BYTE    "Using recursion, I found that the sum is: ",0
+REC_final               BYTE    LF, "   Using recursion, I found that the sum is: ",0
 REC_answer				DWORD 	?
 
 
@@ -343,7 +343,8 @@ FPUandREC:
         call            RSum                        ; Using the EAX and ECX recursively sum the numbers    
         mPrint          REC_final
         call            Writedec
-        call            CrLf
+        call            Crlf
+        call            Crlf
         mPrint          REQ_moveon
     ; loop until user hits the enter key
     _l:
@@ -1507,7 +1508,7 @@ dec 		ECX
 call 		RSum
 _end:
 mov 		REC_answer, EAX
-ret 4
+ret
 RSum endp
 
 ; -------------------------------------------------------- -
@@ -1530,8 +1531,10 @@ mov 	EDX, OFFSET FPU_getUserSecNum
 call 	WriteString
 call 	ReadFloat
 FADD 	ST(0), ST(1)
+mPrint  FPU_result
 call 	WriteFloat
-call    CrLf
+call    Crlf
+call    Crlf
 
 ret
 AddFPU  ENDP
