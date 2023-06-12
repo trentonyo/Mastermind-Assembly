@@ -227,30 +227,18 @@ selectColor    				BYTE		"Select a color for a peg using the arrow keys, and pre
 
 current_round               BYTE        0
 
-solution                    DWORD        CODE_LENGTH DUP(?)
-game_matrix                 DWORD        CODE_LENGTH DUP(ROUNDS DUP(?))
+solution                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)
+game_matrix                 DWORD       CODE_LENGTH DUP(ROUNDS DUP(?))
 ; Created for key inputs.Will hold current user's guess
-user_guess                  DWORD        CODE_LENGTH DUP(?)                     ; TODO consolidate arrays from test phase - Trenton Young
+user_guess                  DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)
 
 ; Hits and Blows            hits and blows will be stored in these variables
 hits                        DWORD       0
 blows                       DWORD       0
-uArray                      DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_1)       ; user guesses         ; TODO consolidate arrays from test phase - Trenton Young
-solArray                    DWORD       CODE_LENGTH DUP(OUT_OF_RANGE_2)       ; peg positions?       ; TODO consolidate arrays from test phase - Trenton Young
 helperVar1                  DWORD       ?
 T_HelperVar                 DWORD       ?
 matches                     DWORD       ?
 
-; Hits and Blows temporary helper variables   - feel free to delete after
-msgHh1                      BYTE        "Comparing arrays", LF, 0
-msgHh2                      BYTE        "User array: ", 0
-msgHh3                      BYTE        LF, "Solution array: ", 0
-msgHh4                      BYTE        LF, "hits: ", 0
-msgHh5                      BYTE        LF, "blows: ", 0
-msgSpace                    BYTE        " ", 0
-
-
-userArray                   DWORD       4 DUP(?)                                ; TODO consolidate arrays from test phase - Trenton Young
 currX                       DWORD       15              ; Helper var for GetUserCode. Stores current X coordinate. FOR START OF GAME, SET TO 7 ; TODO can probably be calculated on the fly (from test phase) - Trenton Young
 currY                       DWORD       7               ; Helper var for GetUserCode. Stores current Y coordinate. FOR START OF GAME, SET TO 7
 currIndex                   DWORD       0               ; Helper var for GetUserCode. Will store current array index.
@@ -293,7 +281,7 @@ mPlaceFeedback  7, 4, HIT
 mPlaceFeedback  8, 4, BLOW
 mPlaceFeedback  7, 5, BLOW
 
-push            TRUE
+push            FALSE
 push            TYPE solution
 push            OFFSET solution
 call            GenerateCode
@@ -301,7 +289,7 @@ call            GenerateCode
 call            PrintSolution
 
 
-push            OFFSET userArray
+push            OFFSET user_guess
 call            GetUserCode
 
 
@@ -311,7 +299,7 @@ mGotoXY         1, 20
 push            8
 call            SetColorFromPalette
 
-; comparing uArray and solArray elements - updates hits and blows
+; comparing user_guess and solution elements - updates hits and blows
 push            OFFSET blows
 push            OFFSET hits
 call            CheckSimilar
@@ -369,7 +357,7 @@ GenerateCode PROC
 ;
 ; Preconditions:    Define global const CODE_LENGTH
 ; Postconditions:   Target will contain the new code,
-;                   uArray and solArray will be mutated
+;                   user_guess and solution will be mutated
 ; -------------------------------------------------------- -
 push        EBP
 mov         EBP, ESP    ; register-indirect initialization
@@ -385,10 +373,10 @@ mov         T_HelperVar, 0
 ;inc         ECX
 
 _clearCheckArrays:
-    mov     uArray[EAX], OUT_OF_RANGE_1
-    mov     solArray[EAX], OUT_OF_RANGE_2
+    mov     user_guess[EAX], OUT_OF_RANGE_1
+    mov     solution[EAX], OUT_OF_RANGE_2
 
-    add     EAX, TYPE uArray
+    add     EAX, TYPE user_guess
     loop    _clearCheckArrays
 
     mov     T_HelperVar, 0            ; initialize index accumulator
@@ -417,9 +405,9 @@ _generateCode:
     pop     ECX                     ; ECX is loop counter again
 
     _checkCode:
-        mov             uArray[0], EDX      ; Store the current candidate in uArray[0]
+        mov             user_guess[0], EDX      ; Store the current candidate in user_guess[0]
 
-        ; comparing uArray(candidate, index, ?, ?) and solArray(accepted codes) elements - updates hits and blows
+        ; comparing user_guess(candidate, index, ?, ?) and solution(accepted codes) elements - updates hits and blows
         push            OFFSET blows
         push            OFFSET hits
         call            CheckSimilar
@@ -431,11 +419,11 @@ _generateCode:
 
         push            EBX
         mov             EBX, T_HelperVar
-        mov             solArray[EBX], EDX  ; store the accepted candidate in the next slot of the solution array
+        mov             solution[EBX], EDX  ; store the accepted candidate in the next slot of the solution array
         pop             EBX
 
         push            EAX
-        mov             EAX, TYPE uArray
+        mov             EAX, TYPE user_guess
         add             T_HelperVar, EAX    ; increment index accumulator
         pop             EAX
 
@@ -650,8 +638,8 @@ CheckSimilar PROC
 ;                   push OFFSEt hits        [8]
 ;                   call
 ;
-; Preconditions:    Must have uArray and solArray as global variables
-;                   Both of the arrays must have a size of 4   TODO must they, though? - Trenton Young
+; Preconditions:    Must have user_guess and solution as global variables
+;                   Both of the arrays must have a size of 4
 ;                   Additional global variables needed:
 ;                   helperVar1, matches
 ;
@@ -672,16 +660,16 @@ CheckSimilar PROC
     mov     matches, EAX
 
     mov     ECX, 0
-    PrintuArray:
+    PrintUserGuess:
         push    ECX
-        push    OFFSET uArray
-        push    TYPE uArray
+        push    OFFSET user_guess
+        push    TYPE user_guess
         call    ArrayAt
         mov     helperVar1, EAX
 
         push    ECX
-        push    OFFSET solArray
-        push    TYPE solArray
+        push    OFFSET solution
+        push    TYPE solution
         call    ArrayAt
         mov     EBX, helperVar1
         cmp     EBX, EAX
@@ -697,8 +685,8 @@ CheckSimilar PROC
             mov     EBX, hits
             loop2ndArray:
                 push    EBX
-                push    OFFSET uArray
-                push    TYPE uArray
+                push    OFFSET user_guess
+                push    TYPE user_guess
                 call    ArrayAt
                 cmp     EAX, helperVar1
                 JE      isAMatch
@@ -714,11 +702,11 @@ CheckSimilar PROC
 
         outOfisThisInArray:
             cmp     ECX, 3
-            JE      outOfPrintuArray
+            JE      outOfPrintUserGuess
             add     ECX, 1
-            JMP     PrintuArray
+            JMP     PrintUserGuess
 
-outOfPrintuArray:
+outOfPrintUserGuess:
     mov     EBX, [EBP + 8]
     mov     EAX, hits
     mov     [EBX], EAX      ; saving to hits variable
@@ -798,14 +786,14 @@ GetUserCode PROC
 ; Author:           Brayden Aldrich
 ; Description:      Gets user inputs via arrow keys and the enter key,
 ;                   dynamically displays these choices, then stores desired color
-;                   into userArray
+;                   into user_guess
 ;
-; Helper Variables: currX, currIndex, userArray
+; Helper Variables: currX, currIndex, user_guess
 ;
 ; Parameters:       push OFFSET array
 ;                   call 
 ;                   
-; Postconditions:   Updated userArray
+; Postconditions:   Updated user_guess
 ; -------------------------------------------------------- -
 push            EBP
 mov             EBP, ESP
@@ -919,7 +907,7 @@ mov             EAX, currY              ; move current y coordinate into eax
 add             EAX, 2                  ; incease it by 2
 mov             currY, EAX              ; store updated currY
 
-inc             currIndex               ; increment current index in userArray
+inc             currIndex               ; increment current index in user_guess
 cmp             currIndex, 4            ; check to see if it's over array limit
 jge             _end
 jmp             _preloop                ; loop to get a new number
